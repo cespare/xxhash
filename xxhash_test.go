@@ -2,17 +2,14 @@ package xxhash
 
 import (
 	"bytes"
-	"crypto/md5"
-	"crypto/sha1"
-	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"hash"
 	"hash/crc32"
-	"hash/fnv"
 	"strings"
 	"testing"
 
+	"github.com/OneOfOne/xxhash"
 	"github.com/spaolacci/murmur3"
 )
 
@@ -80,18 +77,29 @@ func TestReset(t *testing.T) {
 	}
 }
 
+var (
+	sink  uint64
+	sinkb []byte
+)
+
+func sumFunc(h hash.Hash) func(b []byte) uint64 {
+	return func(b []byte) uint64 {
+		h.Reset()
+		h.Write(b)
+		sinkb = h.Sum(nil)
+		return 0 // value doesn't matter
+	}
+}
+
 func BenchmarkHashes(b *testing.B) {
 	for _, ht := range []struct {
 		name string
-		h    hash.Hash
+		f    func(b []byte) uint64
 	}{
-		{"xxhash", New()},
-		{"murmur3", murmur3.New64()},
-		{"SHA-1", sha1.New()},
-		{"SHA256", sha256.New()},
-		{"CRC-32", crc32.NewIEEE()},
-		{"MD5", md5.New()},
-		{"FNV", fnv.New64()},
+		{"xxhash", Sum64},
+		{"OneOfOne", xxhash.Checksum64},
+		{"murmur3", murmur3.Sum64},
+		{"CRC-32", sumFunc(crc32.NewIEEE())},
 	} {
 		for _, nt := range []struct {
 			name string
@@ -109,15 +117,15 @@ func BenchmarkHashes(b *testing.B) {
 			}
 			b.Run(
 				fmt.Sprintf("%s,n=%s", ht.name, nt.name),
-				func(b *testing.B) { bench(b, ht.h, s) },
+				func(b *testing.B) { bench(b, ht.f, s) },
 			)
 		}
 	}
 }
 
-func bench(b *testing.B, h hash.Hash, s []byte) {
+func bench(b *testing.B, f func(b []byte) uint64, s []byte) {
 	b.SetBytes(int64(len(s)))
 	for i := 0; i < b.N; i++ {
-		h.Write(s)
+		sink = f(s)
 	}
 }
