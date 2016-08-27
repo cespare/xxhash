@@ -2,9 +2,18 @@ package xxhash
 
 import (
 	"bytes"
+	"crypto/md5"
+	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/binary"
+	"fmt"
+	"hash"
+	"hash/crc32"
+	"hash/fnv"
 	"strings"
 	"testing"
+
+	"github.com/spaolacci/murmur3"
 )
 
 func TestSum(t *testing.T) {
@@ -68,5 +77,47 @@ func TestReset(t *testing.T) {
 
 	if h0 != h1 {
 		t.Errorf("0x%x != 0x%x", h0, h1)
+	}
+}
+
+func BenchmarkHashes(b *testing.B) {
+	for _, ht := range []struct {
+		name string
+		h    hash.Hash
+	}{
+		{"xxhash", New()},
+		{"murmur3", murmur3.New64()},
+		{"SHA-1", sha1.New()},
+		{"SHA256", sha256.New()},
+		{"CRC-32", crc32.NewIEEE()},
+		{"MD5", md5.New()},
+		{"FNV", fnv.New64()},
+	} {
+		for _, nt := range []struct {
+			name string
+			n    int
+		}{
+			{"5b", 5},
+			{"20b", 20},
+			{"100b", 100},
+			{"4KB", 4e3},
+			{"10MB", 10e6},
+		} {
+			s := make([]byte, nt.n)
+			for i := range s {
+				s[i] = byte(i)
+			}
+			b.Run(
+				fmt.Sprintf("%s,n=%s", ht.name, nt.name),
+				func(b *testing.B) { bench(b, ht.h, s) },
+			)
+		}
+	}
+}
+
+func bench(b *testing.B, h hash.Hash, s []byte) {
+	b.SetBytes(int64(len(s)))
+	for i := 0; i < b.N; i++ {
+		h.Write(s)
 	}
 }
