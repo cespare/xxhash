@@ -29,7 +29,7 @@ type xxh struct {
 	i   int // index into mem
 }
 
-// Sum64 computes the 64-bit xxHash hash of b.
+// Sum64 computes the 64-bit xxHash digest of b.
 func Sum64(b []byte) uint64 {
 	x := New()
 	x.Write(b)
