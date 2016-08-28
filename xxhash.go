@@ -7,8 +7,6 @@ import (
 	"hash"
 )
 
-// TODO: Implement custom seed
-
 // NOTE(caleb): These are vars instead of consts to make them easier to use with
 // intentional overflow without having to realize them as vars first.
 var (
