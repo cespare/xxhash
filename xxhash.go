@@ -31,9 +31,63 @@ type xxh struct {
 
 // Sum64 computes the 64-bit xxHash digest of b.
 func Sum64(b []byte) uint64 {
-	x := New()
-	x.Write(b)
-	return x.Sum64()
+	// A simpler version would be
+	//   x := New()
+	//   x.Write(b)
+	//   return x.Sum64()
+	// but this is faster, particularly for small inputs.
+
+	n := len(b)
+	var h uint64
+
+	if n >= 32 {
+		v1 := prime1 + prime2
+		v2 := prime2
+		v3 := uint64(0)
+		v4 := -prime1
+		for len(b) >= 32 {
+			v1 = round(v1, u64(b[0:8]))
+			v2 = round(v2, u64(b[8:16]))
+			v3 = round(v3, u64(b[16:24]))
+			v4 = round(v4, u64(b[24:32]))
+			b = b[32:]
+		}
+		h = rotl(v1, 1) + rotl(v2, 7) + rotl(v3, 12) + rotl(v4, 18)
+		h = mergeRound(h, v1)
+		h = mergeRound(h, v2)
+		h = mergeRound(h, v3)
+		h = mergeRound(h, v4)
+	} else {
+		h = prime5
+	}
+
+	h += uint64(n)
+
+	i, end := 0, len(b)
+	for ; i+8 <= end; i += 8 {
+		k1 := round(0, u64(b[i:i+8]))
+		h ^= k1
+		h = rotl(h, 27)*prime1 + prime4
+	}
+	if i+4 <= end {
+		h ^= uint64(u32(b[i:i+4])) * prime1
+		h = rotl(h, 23)*prime2 + prime3
+		i += 4
+	}
+	for i < end {
+		h ^= uint64(b[i]) * prime5
+		h = rotl(h, 11) * prime1
+		i++
+	}
+
+	h ^= h >> 33
+	h *= prime2
+	h ^= h >> 29
+	h *= prime3
+	h ^= h >> 32
+
+	return h
+
 }
 
 // New creates a new hash.Hash64 that implements the 64-bit xxHash algorithm.
