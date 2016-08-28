@@ -28,17 +28,15 @@ type xxh struct {
 }
 
 // Sum64 computes the 64-bit xxHash digest of b.
-func Sum64(b []byte) uint64 {
+func Sum64(b []byte) uint64 { return sum64(b) }
+
+func sum64Go(b []byte) uint64 {
 	// A simpler version would be
 	//   x := New()
 	//   x.Write(b)
 	//   return x.Sum64()
 	// but this is faster, particularly for small inputs.
 
-	return sum64(b)
-}
-
-func sum64Go(b []byte) uint64 {
 	n := len(b)
 	var h uint64
 

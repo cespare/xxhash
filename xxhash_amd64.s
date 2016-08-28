@@ -5,21 +5,19 @@
 #include "textflag.h"
 
 // Register allocation:
+// AX	h
+// CX	pointer to advance through b
 // DX	n
 // BX	loop end
-// AX	h
 // R8	v1, k1
 // R9	v2, prime3
 // R10	v3, prime5
 // R11	v4
-// CX	pointer to advance through b
 // R12	tmp
 // R13	prime1
 // R14	prime2
 // R15	prime4
 
-// func sum64(b []byte) uint64
-TEXT ·sum64(SB), NOSPLIT, $0-32
 #define prime1 11400714785074694791
 #define prime2 14029467366897019727
 #define prime3 1609587929392839161
@@ -44,6 +42,8 @@ TEXT ·sum64(SB), NOSPLIT, $0-32
 	IMULQ R13, acc \
 	ADDQ  R15, acc
 
+// func sum64(b []byte) uint64
+TEXT ·sum64(SB), NOSPLIT, $0-32
 	// Load fixed primes.
 	MOVQ $prime1, R13
 	MOVQ $prime2, R14
