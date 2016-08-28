@@ -46,11 +46,11 @@ func Sum64(b []byte) uint64 {
 		v3 := uint64(0)
 		v4 := -prime1
 		for len(b) >= 32 {
-			v1 = round(v1, u64(b[0:8]))
-			v2 = round(v2, u64(b[8:16]))
-			v3 = round(v3, u64(b[16:24]))
-			v4 = round(v4, u64(b[24:32]))
-			b = b[32:]
+			v1 = round(v1, u64(b[0:8:len(b)]))
+			v2 = round(v2, u64(b[8:16:len(b)]))
+			v3 = round(v3, u64(b[16:24:len(b)]))
+			v4 = round(v4, u64(b[24:32:len(b)]))
+			b = b[32:len(b):len(b)]
 		}
 		h = rotl(v1, 1) + rotl(v2, 7) + rotl(v3, 12) + rotl(v4, 18)
 		h = mergeRound(h, v1)
@@ -65,12 +65,12 @@ func Sum64(b []byte) uint64 {
 
 	i, end := 0, len(b)
 	for ; i+8 <= end; i += 8 {
-		k1 := round(0, u64(b[i:i+8]))
+		k1 := round(0, u64(b[i:i+8:len(b)]))
 		h ^= k1
 		h = rotl(h, 27)*prime1 + prime4
 	}
 	if i+4 <= end {
-		h ^= uint64(u32(b[i:i+4])) * prime1
+		h ^= uint64(u32(b[i:i+4:len(b)])) * prime1
 		h = rotl(h, 23)*prime2 + prime3
 		i += 4
 	}
@@ -136,11 +136,11 @@ func (x *xxh) Write(b []byte) (n int, err error) {
 		// One or more full blocks left.
 		v1, v2, v3, v4 := x.v1, x.v2, x.v3, x.v4
 		for len(b) >= 32 {
-			v1 = round(v1, u64(b[0:8]))
-			v2 = round(v2, u64(b[8:16]))
-			v3 = round(v3, u64(b[16:24]))
-			v4 = round(v4, u64(b[24:32]))
-			b = b[32:]
+			v1 = round(v1, u64(b[0:8:len(b)]))
+			v2 = round(v2, u64(b[8:16:len(b)]))
+			v3 = round(v3, u64(b[16:24:len(b)]))
+			v4 = round(v4, u64(b[24:32:len(b)]))
+			b = b[32:len(b):len(b)]
 		}
 		x.v1, x.v2, x.v3, x.v4 = v1, v2, v3, v4
 	}
