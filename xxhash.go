@@ -7,6 +7,11 @@ import (
 	"hash"
 )
 
+var (
+	debug0 uint64
+	debug1 uint64
+)
+
 // NOTE(caleb): These are vars instead of consts to make them easier to use with
 // intentional overflow without having to realize them as vars first.
 var (
@@ -35,6 +40,10 @@ func Sum64(b []byte) uint64 {
 	//   return x.Sum64()
 	// but this is faster, particularly for small inputs.
 
+	return sum64(b)
+}
+
+func sum64Go(b []byte) uint64 {
 	n := len(b)
 	var h uint64
 
@@ -85,7 +94,6 @@ func Sum64(b []byte) uint64 {
 	h ^= h >> 32
 
 	return h
-
 }
 
 // New creates a new hash.Hash64 that implements the 64-bit xxHash algorithm.
