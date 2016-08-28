@@ -15,8 +15,8 @@
 // CX	pointer to advance through b
 // R12	tmp
 // R13	prime1
-// R14  prime2
-// R15  prime4
+// R14	prime2
+// R15	prime4
 
 // func sum64(b []byte) uint64
 TEXT ·sum64(SB), NOSPLIT, $0-32
