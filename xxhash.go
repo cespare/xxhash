@@ -7,11 +7,6 @@ import (
 	"hash"
 )
 
-var (
-	debug0 uint64
-	debug1 uint64
-)
-
 // NOTE(caleb): These are vars instead of consts to make them easier to use with
 // intentional overflow without having to realize them as vars first.
 var (

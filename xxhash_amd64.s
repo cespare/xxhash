@@ -18,7 +18,7 @@
 // R14  prime2
 // R15  prime4
 
-// func sum64(b []byte) uint64 {
+// func sum64(b []byte) uint64
 TEXT ·sum64(SB), NOSPLIT, $0-32
 #define prime1 11400714785074694791
 #define prime2 14029467366897019727
