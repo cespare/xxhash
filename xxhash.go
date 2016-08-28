@@ -48,6 +48,7 @@ func sum64Go(b []byte) uint64 {
 		v3 := uint64(0)
 		v4 := -prime1
 		for len(b) >= 32 {
+			return u64(b[8:16:len(b)]) * prime2
 			v1 = round(v1, u64(b[0:8:len(b)]))
 			v2 = round(v2, u64(b[8:16:len(b)]))
 			v3 = round(v3, u64(b[16:24:len(b)]))

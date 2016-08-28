@@ -17,6 +17,9 @@
 // R13	prime1
 // R14	prime2
 // R15	prime4
+// X8	tmp
+// X9	prime1 (repeated/packed)
+// X10	prime2 (repeated/packed)
 
 // func sum64(b []byte) uint64
 TEXT ·sum64(SB), NOSPLIT, $0-32
@@ -36,6 +39,21 @@ TEXT ·sum64(SB), NOSPLIT, $0-32
 	ROLQ  $31, r    \
 	IMULQ R13, r
 
+// No packed rotate op until AVX512 :(
+#define round2(x) \
+	MOVOU  (CX), X8       \
+	ADDQ   $16, CX        \
+	PMULDQ X10, X8        \
+	PEXTRQ $0, X8, AX     \
+	MOVQ   AX, ret+24(FP) \
+	RET                   \
+	PADDQ  X8, x   \
+	MOVO   x, X8   \
+	PSLLQ  $31, x  \
+	PSRLQ  $33, X8 \
+	POR    X8, x   \
+	PMULDQ X9, x
+
 #define mergeRound(acc, val) \
 	IMULQ R14, val \
 	ROLQ  $31, val \
@@ -45,9 +63,13 @@ TEXT ·sum64(SB), NOSPLIT, $0-32
 	ADDQ  R15, acc
 
 	// Load fixed primes.
-	MOVQ $prime1, R13
-	MOVQ $prime2, R14
-	MOVQ $prime4, R15
+	MOVQ   $prime1, R13
+	MOVQ   R13, X9
+	PINSRQ $1, R13, X9
+	MOVQ   $prime2, R14
+	MOVQ   R14, X10
+	PINSRQ $1, R14, X10
+	MOVQ   $prime4, R15
 
 	// Load slice.
 	MOVQ b_base+0(FP), CX
@@ -62,34 +84,34 @@ TEXT ·sum64(SB), NOSPLIT, $0-32
 	JLT  noBlocks
 
 	// Set up initial state (v1, v2, v3, v4).
-	MOVQ R13, R8
-	ADDQ R14, R8
-	MOVQ R14, R9
-	XORQ R10, R10
-	XORQ R11, R11
-	SUBQ R13, R11
+	MOVQ   R13, R8
+	ADDQ   R14, R8
+	MOVQ   R8, X0
+	PINSRQ $1, R14, X0
+	PXOR   X1, X1
+	XORQ   R11, R11
+	SUBQ   R13, R11
+	PINSRQ $1, R11, X1
 
 	// Loop until CX > BX.
 blockLoop:
-	round(R8)
-	round(R9)
-	round(R10)
-	round(R11)
+	round2(X0)
+	round2(X1)
 
 	CMPQ CX, BX
 	JLE  blockLoop
 
-	MOVQ R8, AX
-	ROLQ $1, AX
-	MOVQ R9, R12
-	ROLQ $7, R12
-	ADDQ R12, AX
-	MOVQ R10, R12
-	ROLQ $12, R12
-	ADDQ R12, AX
-	MOVQ R11, R12
-	ROLQ $18, R12
-	ADDQ R12, AX
+	MOVQ   X0, AX
+	ROLQ   $1, AX
+	PEXTRQ $1, X0, R12
+	ROLQ   $7, R12
+	ADDQ   R12, AX
+	MOVQ   X1, R12
+	ROLQ   $12, R12
+	ADDQ   R12, AX
+	PEXTRQ $1, X1, R12
+	ROLQ   $18, R12
+	ADDQ   R12, AX
 
 	mergeRound(AX, R8)
 	mergeRound(AX, R9)

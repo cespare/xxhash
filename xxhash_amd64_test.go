@@ -4,7 +4,19 @@
 
 package xxhash
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
+
+func TestFoo(t *testing.T) {
+	b := make([]byte, 32)
+	for i := range b {
+		b[i] = 'a' + byte(i)
+	}
+	fmt.Println(sum64Go(b))
+	fmt.Println(sum64(b))
+}
 
 func TestASM(t *testing.T) {
 	for i := 0; i < 500; i++ {
