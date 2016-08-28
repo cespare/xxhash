@@ -20,13 +20,13 @@ var (
 )
 
 type xxh struct {
-	n   int
-	v1  uint64
-	v2  uint64
-	v3  uint64
-	v4  uint64
-	mem [32]byte
-	i   int // index into mem
+	total int
+	v1    uint64
+	v2    uint64
+	v3    uint64
+	v4    uint64
+	mem   [32]byte
+	n     int // how much of mem is used
 }
 
 // Sum64 computes the 64-bit xxHash digest of b.
@@ -44,8 +44,8 @@ func New() hash.Hash64 {
 }
 
 func (x *xxh) Reset() {
-	x.i = 0
 	x.n = 0
+	x.total = 0
 	x.v1 = prime1 + prime2
 	x.v2 = prime2
 	x.v3 = 0
@@ -58,24 +58,24 @@ func (x *xxh) BlockSize() int { return 32 }
 // Write adds more data to x. It always returns len(b), nil.
 func (x *xxh) Write(b []byte) (n int, err error) {
 	n = len(b)
-	x.n += len(b)
+	x.total += len(b)
 
-	if x.i+len(b) < 32 {
+	if x.n+len(b) < 32 {
 		// This new data doesn't even fill the current block.
-		copy(x.mem[x.i:], b)
-		x.i += len(b)
+		copy(x.mem[x.n:], b)
+		x.n += len(b)
 		return
 	}
 
-	if x.i > 0 {
+	if x.n > 0 {
 		// Finish off the partial block.
-		copy(x.mem[x.i:], b)
+		copy(x.mem[x.n:], b)
 		x.v1 = round(x.v1, u64(x.mem[0:8]))
 		x.v2 = round(x.v2, u64(x.mem[8:16]))
 		x.v3 = round(x.v3, u64(x.mem[16:24]))
 		x.v4 = round(x.v4, u64(x.mem[24:32]))
-		b = b[32-x.i:]
-		x.i = 0
+		b = b[32-x.n:]
+		x.n = 0
 	}
 
 	if len(b) >= 32 {
@@ -93,7 +93,7 @@ func (x *xxh) Write(b []byte) (n int, err error) {
 
 	// Store any remaining partial block.
 	copy(x.mem[:], b)
-	x.i = len(b)
+	x.n = len(b)
 
 	return
 }
@@ -116,7 +116,7 @@ func (x *xxh) Sum(b []byte) []byte {
 func (x *xxh) Sum64() uint64 {
 	var h uint64
 
-	if x.n >= 32 {
+	if x.total >= 32 {
 		v1, v2, v3, v4 := x.v1, x.v2, x.v3, x.v4
 		h = rotl(v1, 1) + rotl(v2, 7) + rotl(v3, 12) + rotl(v4, 18)
 		h = mergeRound(h, v1)
@@ -127,9 +127,9 @@ func (x *xxh) Sum64() uint64 {
 		h = x.v3 + prime5
 	}
 
-	h += uint64(x.n)
+	h += uint64(x.total)
 
-	i, end := 0, x.i
+	i, end := 0, x.n
 	for ; i+8 <= end; i += 8 {
 		k1 := round(0, u64(x.mem[i:i+8]))
 		h ^= k1
