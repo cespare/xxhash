@@ -18,12 +18,6 @@
 // R14	prime2
 // R15	prime4
 
-#define prime1 11400714785074694791
-#define prime2 14029467366897019727
-#define prime3 1609587929392839161
-#define prime4 9650029242287828579
-#define prime5 2870177450012600261
-
 // round reads from and advances the buffer pointer in CX.
 // It assumes that R13 has prime1 and R14 has prime2.
 #define round(r) \
@@ -45,9 +39,9 @@
 // func sum64(b []byte) uint64
 TEXT ·sum64(SB), NOSPLIT, $0-32
 	// Load fixed primes.
-	MOVQ $prime1, R13
-	MOVQ $prime2, R14
-	MOVQ $prime4, R15
+	MOVQ ·prime1(SB), R13
+	MOVQ ·prime2(SB), R14
+	MOVQ ·prime4(SB), R15
 
 	// Load slice.
 	MOVQ b_base+0(FP), CX
@@ -99,13 +93,13 @@ blockLoop:
 	JMP afterBlocks
 
 noBlocks:
-	MOVQ $prime5, AX
+	MOVQ ·prime5(SB), AX
 
 afterBlocks:
 	ADDQ DX, AX
 
-	MOVQ $prime3, R9
-	MOVQ $prime5, R10
+	MOVQ ·prime3(SB), R9
+	MOVQ ·prime5(SB), R10
 
 	// Right now BX has len(b)-32, and we want to loop until CX > len(b)-8.
 	ADDQ $24, BX
@@ -182,8 +176,8 @@ finalize:
 // func writeBlocks(x *xxh, b []byte) []byte
 TEXT ·writeBlocks(SB), NOSPLIT, $0-56
 	// Load fixed primes.
-	MOVQ $prime1, R13
-	MOVQ $prime2, R14
+	MOVQ ·prime1(SB), R13
+	MOVQ ·prime2(SB), R14
 
 	// Load slice.
 	MOVQ b_base+8(FP), CX
