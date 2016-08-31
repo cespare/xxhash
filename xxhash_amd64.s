@@ -10,8 +10,8 @@
 // DX	n
 // BX	loop end
 // R8	v1, k1
-// R9	v2, prime3
-// R10	v3, prime5
+// R9	v2
+// R10	v3
 // R11	v4
 // R12	tmp
 // R13	prime1
@@ -28,6 +28,8 @@
 	ROLQ  $31, r    \
 	IMULQ R13, r
 
+// mergeRound applies a merge round on the two registers acc and val.
+// It assumes that R13 has prime1, R14 has prime2, and R15 has prime4.
 #define mergeRound(acc, val) \
 	IMULQ R14, val \
 	ROLQ  $31, val \
@@ -98,9 +100,6 @@ noBlocks:
 afterBlocks:
 	ADDQ DX, AX
 
-	MOVQ ·prime3(SB), R9
-	MOVQ ·prime5(SB), R10
-
 	// Right now BX has len(b)-32, and we want to loop until CX > len(b)-8.
 	ADDQ $24, BX
 
@@ -135,7 +134,7 @@ fourByte:
 
 	ROLQ  $23, AX
 	IMULQ R14, AX
-	ADDQ  R9, AX
+	ADDQ  ·prime3(SB), AX
 
 singles:
 	ADDQ $4, BX
@@ -145,7 +144,7 @@ singles:
 singlesLoop:
 	MOVBQZX (CX), R12
 	ADDQ    $1, CX
-	IMULQ   R10, R12
+	IMULQ   ·prime5(SB), R12
 	XORQ    R12, AX
 
 	ROLQ  $11, AX
@@ -162,7 +161,7 @@ finalize:
 	MOVQ  AX, R12
 	SHRQ  $29, R12
 	XORQ  R12, AX
-	IMULQ R9, AX
+	IMULQ ·prime3(SB), AX
 	MOVQ  AX, R12
 	SHRQ  $32, R12
 	XORQ  R12, AX
@@ -175,7 +174,7 @@ finalize:
 
 // func writeBlocks(x *xxh, b []byte) []byte
 TEXT ·writeBlocks(SB), NOSPLIT, $0-56
-	// Load fixed primes.
+	// Load fixed primes needed for round.
 	MOVQ ·prime1(SB), R13
 	MOVQ ·prime2(SB), R14
 
