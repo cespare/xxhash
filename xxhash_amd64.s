@@ -170,17 +170,18 @@ finalize:
 	RET
 
 // writeBlocks uses the same registers as above except that it uses AX to store
-// the x pointer.
+// the x pointer and R15 to store the bp pointer.
 
-// func writeBlocks(x *xxh, b []byte) []byte
-TEXT ·writeBlocks(SB), NOSPLIT, $0-56
+// func writeBlocks(x *xxh, bp *[]byte)
+TEXT ·writeBlocks(SB), NOSPLIT, $0-16
 	// Load fixed primes needed for round.
 	MOVQ ·prime1(SB), R13
 	MOVQ ·prime2(SB), R14
 
 	// Load slice.
-	MOVQ b_base+8(FP), CX
-	MOVQ b_len+16(FP), DX
+	MOVQ bp+8(FP), R15
+	MOVQ (R15), CX      // base
+	MOVQ 8(R15), DX     // len
 	LEAQ (CX)(DX*1), BX
 	SUBQ $32, BX
 
@@ -208,15 +209,15 @@ blockLoop:
 	MOVQ R10, 16(AX)
 	MOVQ R11, 24(AX)
 
-	// Construct return slice.
-	MOVQ CX, ret+32(FP)
+	// Write result slice.
+	MOVQ CX, (R15)
 
 	// New length is 32 - (CX - BX) -> BX+32 - CX.
 	ADDQ $32, BX
 	SUBQ CX, BX
-	MOVQ BX, ret+40(FP)
+	MOVQ BX, 8(R15)
 
 	// Set the cap same as length.
-	MOVQ BX, ret+48(FP)
+	MOVQ BX, 16(R15)
 
 	RET

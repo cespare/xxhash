@@ -133,7 +133,7 @@ func (x *xxh) Write(b []byte) (n int, err error) {
 
 	if len(b) >= 32 {
 		// One or more full blocks left.
-		b = writeBlocks(x, b)
+		writeBlocks(x, &b)
 	}
 
 	// Store any remaining partial block.
@@ -143,8 +143,9 @@ func (x *xxh) Write(b []byte) (n int, err error) {
 	return
 }
 
-func writeBlocksGo(x *xxh, b []byte) []byte {
+func writeBlocksGo(x *xxh, bp *[]byte) {
 	v1, v2, v3, v4 := x.v1, x.v2, x.v3, x.v4
+	b := *bp
 	for len(b) >= 32 {
 		v1 = round(v1, u64(b[0:8:len(b)]))
 		v2 = round(v2, u64(b[8:16:len(b)]))
@@ -153,7 +154,7 @@ func writeBlocksGo(x *xxh, b []byte) []byte {
 		b = b[32:len(b):len(b)]
 	}
 	x.v1, x.v2, x.v3, x.v4 = v1, v2, v3, v4
-	return b
+	*bp = b
 }
 
 func (x *xxh) Sum(b []byte) []byte {
