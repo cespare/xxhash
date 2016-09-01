@@ -180,6 +180,7 @@ TEXT ·writeBlocks(SB), NOSPLIT, $0-56
 
 	// Load slice.
 	MOVQ b_base+8(FP), CX
+	MOVQ CX, ret_base+32(FP) // initialize return base pointer; see NOTE below
 	MOVQ b_len+16(FP), DX
 	LEAQ (CX)(DX*1), BX
 	SUBQ $32, BX
@@ -209,14 +210,24 @@ blockLoop:
 	MOVQ R11, 24(AX)
 
 	// Construct return slice.
-	MOVQ CX, ret+32(FP)
+	// NOTE: It's important that we don't construct a slice that has a base
+	// pointer off the end of the original slice, as in Go 1.7+ this will
+	// cause runtime crashes. (See discussion in, for example,
+	// https://github.com/golang/go/issues/16772.)
+	// Therefore, we calculate the length/cap first, and if they're zero, we
+	// keep the old base. This is what the compiler does as well if you
+	// write code like
+	//   b = b[len(b):]
 
 	// New length is 32 - (CX - BX) -> BX+32 - CX.
 	ADDQ $32, BX
 	SUBQ CX, BX
-	MOVQ BX, ret+40(FP)
+	JZ   afterSetBase
 
-	// Set the cap same as length.
-	MOVQ BX, ret+48(FP)
+	MOVQ CX, ret_base+32(FP)
+
+afterSetBase:
+	MOVQ BX, ret_len+40(FP)
+	MOVQ BX, ret_cap+48(FP) // set cap == len
 
 	RET
