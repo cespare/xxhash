@@ -13,6 +13,18 @@ import (
 	"github.com/spaolacci/murmur3"
 )
 
+var result uint64
+
+func BenchmarkStringHash(b *testing.B) {
+	const s = "abcdefghijklmnop"
+	var r uint64
+	b.ReportAllocs()
+	for n := 0; n < b.N; n++ {
+		r = Sum64([]byte(s))
+	}
+	result = r
+}
+
 func TestSum(t *testing.T) {
 	for i, tt := range []struct {
 		input string
