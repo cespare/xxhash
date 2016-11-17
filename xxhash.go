@@ -52,7 +52,7 @@ func sum64Go(b []byte) uint64 {
 			v4 = round(v4, u64(b[24:32:len(b)]))
 			b = b[32:len(b):len(b)]
 		}
-		h = rotl(v1, 1) + rotl(v2, 7) + rotl(v3, 12) + rotl(v4, 18)
+		h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 		h = mergeRound(h, v1)
 		h = mergeRound(h, v2)
 		h = mergeRound(h, v3)
@@ -67,16 +67,16 @@ func sum64Go(b []byte) uint64 {
 	for ; i+8 <= end; i += 8 {
 		k1 := round(0, u64(b[i:i+8:len(b)]))
 		h ^= k1
-		h = rotl(h, 27)*prime1 + prime4
+		h = rol27(h)*prime1 + prime4
 	}
 	if i+4 <= end {
 		h ^= uint64(u32(b[i:i+4:len(b)])) * prime1
-		h = rotl(h, 23)*prime2 + prime3
+		h = rol23(h)*prime2 + prime3
 		i += 4
 	}
 	for i < end {
 		h ^= uint64(b[i]) * prime5
-		h = rotl(h, 11) * prime1
+		h = rol11(h) * prime1
 		i++
 	}
 
@@ -176,7 +176,7 @@ func (x *xxh) Sum64() uint64 {
 
 	if x.total >= 32 {
 		v1, v2, v3, v4 := x.v1, x.v2, x.v3, x.v4
-		h = rotl(v1, 1) + rotl(v2, 7) + rotl(v3, 12) + rotl(v4, 18)
+		h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 		h = mergeRound(h, v1)
 		h = mergeRound(h, v2)
 		h = mergeRound(h, v3)
@@ -191,16 +191,16 @@ func (x *xxh) Sum64() uint64 {
 	for ; i+8 <= end; i += 8 {
 		k1 := round(0, u64(x.mem[i:i+8]))
 		h ^= k1
-		h = rotl(h, 27)*prime1 + prime4
+		h = rol27(h)*prime1 + prime4
 	}
 	if i+4 <= end {
 		h ^= uint64(u32(x.mem[i:i+4])) * prime1
-		h = rotl(h, 23)*prime2 + prime3
+		h = rol23(h)*prime2 + prime3
 		i += 4
 	}
 	for i < end {
 		h ^= uint64(x.mem[i]) * prime5
-		h = rotl(h, 11) * prime1
+		h = rol11(h) * prime1
 		i++
 	}
 
@@ -218,7 +218,7 @@ func u32(b []byte) uint32 { return binary.LittleEndian.Uint32(b) }
 
 func round(acc, input uint64) uint64 {
 	acc += input * prime2
-	acc = rotl(acc, 31)
+	acc = rol31(acc)
 	acc *= prime1
 	return acc
 }
@@ -230,4 +230,14 @@ func mergeRound(acc, val uint64) uint64 {
 	return acc
 }
 
-func rotl(x, r uint64) uint64 { return (x << r) | (x >> (64 - r)) }
+// It's important for performance to get the rotates to actually compile to
+// ROLQs. gc will do this for us but only if rotate amount is a constant.
+
+func rol1(x uint64) uint64  { return (x << 1) | (x >> (64 - 1)) }
+func rol7(x uint64) uint64  { return (x << 7) | (x >> (64 - 7)) }
+func rol11(x uint64) uint64 { return (x << 11) | (x >> (64 - 11)) }
+func rol12(x uint64) uint64 { return (x << 12) | (x >> (64 - 12)) }
+func rol18(x uint64) uint64 { return (x << 18) | (x >> (64 - 18)) }
+func rol23(x uint64) uint64 { return (x << 23) | (x >> (64 - 23)) }
+func rol27(x uint64) uint64 { return (x << 27) | (x >> (64 - 27)) }
+func rol31(x uint64) uint64 { return (x << 31) | (x >> (64 - 31)) }
