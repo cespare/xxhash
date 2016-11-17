@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/OneOfOne/xxhash"
+	OneOfOne "github.com/OneOfOne/xxhash"
 	"github.com/spaolacci/murmur3"
 )
 
@@ -109,7 +109,7 @@ func BenchmarkHashes(b *testing.B) {
 		f    func(b []byte) uint64
 	}{
 		{"xxhash", Sum64},
-		{"OneOfOne", xxhash.Checksum64},
+		{"OneOfOne", OneOfOne.Checksum64},
 		{"murmur3", murmur3.Sum64},
 		{"CRC-32", sumFunc(crc32.NewIEEE())},
 	} {
@@ -117,11 +117,10 @@ func BenchmarkHashes(b *testing.B) {
 			name string
 			n    int
 		}{
-			{"5b", 5},
-			{"20b", 20},
-			{"100b", 100},
-			{"4KB", 4e3},
-			{"10MB", 10e6},
+			{"5 B", 5},
+			{"100 B", 100},
+			{"4 KB", 4e3},
+			{"10 MB", 10e6},
 		} {
 			s := make([]byte, nt.n)
 			for i := range s {
