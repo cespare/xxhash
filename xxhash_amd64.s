@@ -38,8 +38,8 @@
 	IMULQ R13, acc \
 	ADDQ  R15, acc
 
-// func sum64(b []byte) uint64
-TEXT ·sum64(SB), NOSPLIT, $0-32
+// func Sum64(b []byte) uint64
+TEXT ·Sum64(SB), NOSPLIT, $0-32
 	// Load fixed primes.
 	MOVQ ·prime1v(SB), R13
 	MOVQ ·prime2v(SB), R14

@@ -4,7 +4,9 @@
 
 package xxhash
 
+// Sum64 computes the 64-bit xxHash digest of b.
+//
 //go:noescape
-func sum64(b []byte) uint64
+func Sum64(b []byte) uint64
 
 func writeBlocks(x *xxh, b []byte) []byte
