@@ -14,12 +14,12 @@
 // R10	v3
 // R11	v4
 // R12	tmp
-// R13	prime1
-// R14	prime2
-// R15	prime4
+// R13	prime1v
+// R14	prime2v
+// R15	prime4v
 
 // round reads from and advances the buffer pointer in CX.
-// It assumes that R13 has prime1 and R14 has prime2.
+// It assumes that R13 has prime1v and R14 has prime2v.
 #define round(r) \
 	MOVQ  (CX), R12 \
 	ADDQ  $8, CX    \
@@ -29,7 +29,7 @@
 	IMULQ R13, r
 
 // mergeRound applies a merge round on the two registers acc and val.
-// It assumes that R13 has prime1, R14 has prime2, and R15 has prime4.
+// It assumes that R13 has prime1v, R14 has prime2v, and R15 has prime4v.
 #define mergeRound(acc, val) \
 	IMULQ R14, val \
 	ROLQ  $31, val \
@@ -41,9 +41,9 @@
 // func sum64(b []byte) uint64
 TEXT ·sum64(SB), NOSPLIT, $0-32
 	// Load fixed primes.
-	MOVQ ·prime1(SB), R13
-	MOVQ ·prime2(SB), R14
-	MOVQ ·prime4(SB), R15
+	MOVQ ·prime1v(SB), R13
+	MOVQ ·prime2v(SB), R14
+	MOVQ ·prime4v(SB), R15
 
 	// Load slice.
 	MOVQ b_base+0(FP), CX
@@ -95,7 +95,7 @@ blockLoop:
 	JMP afterBlocks
 
 noBlocks:
-	MOVQ ·prime5(SB), AX
+	MOVQ ·prime5v(SB), AX
 
 afterBlocks:
 	ADDQ DX, AX
@@ -134,7 +134,7 @@ fourByte:
 
 	ROLQ  $23, AX
 	IMULQ R14, AX
-	ADDQ  ·prime3(SB), AX
+	ADDQ  ·prime3v(SB), AX
 
 singles:
 	ADDQ $4, BX
@@ -144,7 +144,7 @@ singles:
 singlesLoop:
 	MOVBQZX (CX), R12
 	ADDQ    $1, CX
-	IMULQ   ·prime5(SB), R12
+	IMULQ   ·prime5v(SB), R12
 	XORQ    R12, AX
 
 	ROLQ  $11, AX
@@ -161,7 +161,7 @@ finalize:
 	MOVQ  AX, R12
 	SHRQ  $29, R12
 	XORQ  R12, AX
-	IMULQ ·prime3(SB), AX
+	IMULQ ·prime3v(SB), AX
 	MOVQ  AX, R12
 	SHRQ  $32, R12
 	XORQ  R12, AX
@@ -175,8 +175,8 @@ finalize:
 // func writeBlocks(x *xxh, b []byte) []byte
 TEXT ·writeBlocks(SB), NOSPLIT, $0-56
 	// Load fixed primes needed for round.
-	MOVQ ·prime1(SB), R13
-	MOVQ ·prime2(SB), R14
+	MOVQ ·prime1v(SB), R13
+	MOVQ ·prime2v(SB), R14
 
 	// Load slice.
 	MOVQ b_base+8(FP), CX

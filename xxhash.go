@@ -7,14 +7,26 @@ import (
 	"hash"
 )
 
-// NOTE(caleb): These are vars instead of consts to make them easier to use with
-// intentional overflow without having to realize them as vars first.
-var (
+const (
 	prime1 uint64 = 11400714785074694791
 	prime2 uint64 = 14029467366897019727
 	prime3 uint64 = 1609587929392839161
 	prime4 uint64 = 9650029242287828579
 	prime5 uint64 = 2870177450012600261
+)
+
+// NOTE(caleb): I'm using both consts and vars of the primes. Using consts where
+// possible in the Go code is worth a small (but measurable) performance boost
+// by avoiding some MOVQs. Vars are needed for the asm and also are useful for
+// convenience in the Go code in a few places where we need to intentionally
+// avoid constant arithmetic (e.g., v1 := prime1 + prime2 fails because the
+// result overflows a uint64).
+var (
+	prime1v = prime1
+	prime2v = prime2
+	prime3v = prime3
+	prime4v = prime4
+	prime5v = prime5
 )
 
 type xxh struct {
@@ -41,10 +53,10 @@ func sum64Go(b []byte) uint64 {
 	var h uint64
 
 	if n >= 32 {
-		v1 := prime1 + prime2
+		v1 := prime1v + prime2
 		v2 := prime2
 		v3 := uint64(0)
-		v4 := -prime1
+		v4 := -prime1v
 		for len(b) >= 32 {
 			v1 = round(v1, u64(b[0:8:len(b)]))
 			v2 = round(v2, u64(b[8:16:len(b)]))
@@ -74,10 +86,9 @@ func sum64Go(b []byte) uint64 {
 		h = rol23(h)*prime2 + prime3
 		i += 4
 	}
-	for i < end {
+	for ; i < end; i++ {
 		h ^= uint64(b[i]) * prime5
 		h = rol11(h) * prime1
-		i++
 	}
 
 	h ^= h >> 33
@@ -99,10 +110,10 @@ func New() hash.Hash64 {
 func (x *xxh) Reset() {
 	x.n = 0
 	x.total = 0
-	x.v1 = prime1 + prime2
+	x.v1 = prime1v + prime2
 	x.v2 = prime2
 	x.v3 = 0
-	x.v4 = -prime1
+	x.v4 = -prime1v
 }
 
 func (x *xxh) Size() int      { return 8 }
