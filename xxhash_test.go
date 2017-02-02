@@ -69,6 +69,9 @@ func TestSum(t *testing.T) {
 		if got := Sum64([]byte(tt.input)); got != tt.want {
 			t.Fatalf("[i=%d] Sum64: got 0x%x; want 0x%x", i, got, tt.want)
 		}
+		if got := Sum64String(tt.input); got != tt.want {
+			t.Fatalf("[i=%d] Sum64String: got 0x%x; want 0x%x", i, got, tt.want)
+		}
 	}
 }
 
@@ -106,9 +109,10 @@ func sumFunc(h hash.Hash) func(b []byte) uint64 {
 func BenchmarkHashes(b *testing.B) {
 	for _, ht := range []struct {
 		name string
-		f    func(b []byte) uint64
+		f    interface{}
 	}{
 		{"xxhash", Sum64},
+		{"xxhash-string", Sum64String},
 		{"OneOfOne", OneOfOne.Checksum64},
 		{"murmur3", murmur3.Sum64},
 		{"CRC-32", sumFunc(crc32.NewIEEE())},
@@ -122,21 +126,29 @@ func BenchmarkHashes(b *testing.B) {
 			{"4 KB", 4e3},
 			{"10 MB", 10e6},
 		} {
-			s := make([]byte, nt.n)
-			for i := range s {
-				s[i] = byte(i)
+			input := make([]byte, nt.n)
+			for i := range input {
+				input[i] = byte(i)
 			}
-			b.Run(
-				fmt.Sprintf("%s,n=%s", ht.name, nt.name),
-				func(b *testing.B) { bench(b, ht.f, s) },
-			)
+			benchName := fmt.Sprintf("%s,n=%s", ht.name, nt.name)
+			if ht.name == "xxhash-string" {
+				f := ht.f.(func(string) uint64)
+				s := string(input)
+				b.Run(benchName, func(b *testing.B) {
+					b.SetBytes(int64(len(input)))
+					for i := 0; i < b.N; i++ {
+						sink = f(s)
+					}
+				})
+			} else {
+				f := ht.f.(func([]byte) uint64)
+				b.Run(benchName, func(b *testing.B) {
+					b.SetBytes(int64(len(input)))
+					for i := 0; i < b.N; i++ {
+						sink = f(input)
+					}
+				})
+			}
 		}
-	}
-}
-
-func bench(b *testing.B, f func(b []byte) uint64, s []byte) {
-	b.SetBytes(int64(len(s)))
-	for i := 0; i < b.N; i++ {
-		sink = f(s)
 	}
 }
