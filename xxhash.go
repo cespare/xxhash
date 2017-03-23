@@ -43,7 +43,7 @@ func Sum64String(s string) uint64 {
 	var b []byte
 	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
 	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-	bh.Data = uintptr(unsafe.Pointer(sh.Data))
+	bh.Data = sh.Data
 	bh.Len = sh.Len
 	bh.Cap = sh.Len
 	return Sum64(b)
