@@ -14,7 +14,7 @@ import (
 // It may be faster than Sum64([]byte(s)) by avoiding a copy.
 //
 // TODO(caleb): Consider removing this if an optimization is ever added to make
-// it unnecessary: https://golang.org/issue//2205.
+// it unnecessary: https://golang.org/issue/2205.
 //
 // TODO(caleb): We still have a function call; we could instead write Go/asm
 // copies of Sum64 for strings to squeeze out a bit more speed.
