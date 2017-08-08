@@ -39,3 +39,4 @@ implementations of Sum64 against another popular Go XXH64 implementation,
 ## Projects using this package
 
 - [InfluxDB](https://github.com/influxdata/influxdb)
+- [Prometheus](https://github.com/prometheus/prometheus)
