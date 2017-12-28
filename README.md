@@ -31,10 +31,18 @@ implementations of Sum64 against another popular Go XXH64 implementation,
 
 | input size | OneOfOne | cespare (noasm) | cespare |
 | --- | --- | --- | --- |
-| 5 B   |  438.34 MB/s |  596.40 MB/s |  711.11 MB/s  |
-| 100 B | 3676.54 MB/s | 4301.40 MB/s | 4598.95 MB/s  |
-| 4 KB  | 8128.64 MB/s | 8840.83 MB/s | 10549.72 MB/s |
-| 10 MB | 7335.19 MB/s | 7736.64 MB/s | 9024.04 MB/s  |
+| 5 B   |  416 MB/s | 720 MB/s |  872 MB/s  |
+| 100 B | 3980 MB/s | 5013 MB/s | 5252 MB/s  |
+| 4 KB  | 12727 MB/s | 12999 MB/s | 13026 MB/s |
+| 10 MB | 9879 MB/s | 10775 MB/s | 10913 MB/s  |
+
+These numbers were generated with:
+
+```
+$ go test -benchtime 10s -bench '/OneOfOne,'
+$ go test -tags noasm -benchtime 10s -bench '/xxhash,'
+$ go test -benchtime 10s -bench '/xxhash,'
+```
 
 ## Projects using this package
 
