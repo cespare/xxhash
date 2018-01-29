@@ -29,7 +29,7 @@ Here are some quick benchmarks comparing the pure-Go and assembly
 implementations of Sum64 against another popular Go XXH64 implementation,
 [github.com/OneOfOne/xxhash](https://github.com/OneOfOne/xxhash):
 
-| input size | OneOfOne | cespare (noasm) | cespare |
+| input size | OneOfOne | cespare (purego) | cespare |
 | --- | --- | --- | --- |
 | 5 B   |  416 MB/s | 720 MB/s |  872 MB/s  |
 | 100 B | 3980 MB/s | 5013 MB/s | 5252 MB/s  |
@@ -40,7 +40,7 @@ These numbers were generated with:
 
 ```
 $ go test -benchtime 10s -bench '/OneOfOne,'
-$ go test -tags noasm -benchtime 10s -bench '/xxhash,'
+$ go test -tags purego -benchtime 10s -bench '/xxhash,'
 $ go test -benchtime 10s -bench '/xxhash,'
 ```
 
