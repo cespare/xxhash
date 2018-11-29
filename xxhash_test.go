@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"hash"
 	"hash/crc32"
+	"hash/fnv"
 	"strings"
 	"testing"
 
@@ -97,26 +97,96 @@ var (
 	sinkb []byte
 )
 
-func sumFunc(h hash.Hash) func(b []byte) uint64 {
-	return func(b []byte) uint64 {
-		h.Reset()
-		h.Write(b)
-		sinkb = h.Sum(nil)
-		return 0 // value doesn't matter
-	}
+var benchmarks = []struct {
+	name         string
+	directBytes  func([]byte) uint64
+	directString func(string) uint64
+	digestBytes  func([]byte) uint64
+	digestString func(string) uint64
+}{
+	{
+		name:         "xxhash",
+		directBytes:  Sum64,
+		directString: Sum64String,
+		digestBytes: func(b []byte) uint64 {
+			h := New()
+			h.Write(b)
+			return h.Sum64()
+		},
+		digestString: func(s string) uint64 {
+			h := New()
+			h.Write([]byte(s))
+			return h.Sum64()
+		},
+	},
+	{
+		name:         "OneOfOne",
+		directBytes:  OneOfOne.Checksum64,
+		directString: OneOfOne.ChecksumString64,
+		digestBytes: func(b []byte) uint64 {
+			h := OneOfOne.New64()
+			h.Write(b)
+			return h.Sum64()
+		},
+		digestString: func(s string) uint64 {
+			h := OneOfOne.New64()
+			h.WriteString(s)
+			return h.Sum64()
+		},
+	},
+	{
+		name:        "murmur3",
+		directBytes: murmur3.Sum64,
+		directString: func(s string) uint64 {
+			return murmur3.Sum64([]byte(s))
+		},
+		digestBytes: func(b []byte) uint64 {
+			h := murmur3.New64()
+			h.Write(b)
+			return h.Sum64()
+		},
+		digestString: func(s string) uint64 {
+			h := murmur3.New64()
+			h.Write([]byte(s))
+			return h.Sum64()
+		},
+	},
+	{
+		name: "CRC-32",
+		directBytes: func(b []byte) uint64 {
+			return uint64(crc32.ChecksumIEEE(b))
+		},
+		directString: func(s string) uint64 {
+			return uint64(crc32.ChecksumIEEE([]byte(s)))
+		},
+		digestBytes: func(b []byte) uint64 {
+			h := crc32.NewIEEE()
+			h.Write(b)
+			return uint64(h.Sum32())
+		},
+		digestString: func(s string) uint64 {
+			h := crc32.NewIEEE()
+			h.Write([]byte(s))
+			return uint64(h.Sum32())
+		},
+	},
+	{
+		name: "fnv1a",
+		digestBytes: func(b []byte) uint64 {
+			h := fnv.New64()
+			h.Write(b)
+			return uint64(h.Sum64())
+		},
+		digestString: func(s string) uint64 {
+			h := fnv.New64a()
+			h.Write([]byte(s))
+			return uint64(h.Sum64())
+		},
+	},
 }
 
 func BenchmarkHashes(b *testing.B) {
-	for _, ht := range []struct {
-		name string
-		f    interface{}
-	}{
-		{"xxhash", Sum64},
-		{"xxhash-string", Sum64String},
-		{"OneOfOne", OneOfOne.Checksum64},
-		{"murmur3", murmur3.Sum64},
-		{"CRC-32", sumFunc(crc32.NewIEEE())},
-	} {
+	for _, ht := range benchmarks {
 		for _, nt := range []struct {
 			name string
 			n    int
@@ -130,22 +200,36 @@ func BenchmarkHashes(b *testing.B) {
 			for i := range input {
 				input[i] = byte(i)
 			}
-			benchName := fmt.Sprintf("%s,n=%s", ht.name, nt.name)
-			if ht.name == "xxhash-string" {
-				f := ht.f.(func(string) uint64)
-				s := string(input)
-				b.Run(benchName, func(b *testing.B) {
+			inputString := string(input)
+			if ht.directBytes != nil {
+				b.Run(fmt.Sprintf("%s,direct,bytes,n=%s", ht.name, nt.name), func(b *testing.B) {
 					b.SetBytes(int64(len(input)))
 					for i := 0; i < b.N; i++ {
-						sink = f(s)
+						sink = ht.directBytes(input)
 					}
 				})
-			} else {
-				f := ht.f.(func([]byte) uint64)
-				b.Run(benchName, func(b *testing.B) {
+			}
+			if ht.directString != nil {
+				b.Run(fmt.Sprintf("%s,direct,string,n=%s", ht.name, nt.name), func(b *testing.B) {
 					b.SetBytes(int64(len(input)))
 					for i := 0; i < b.N; i++ {
-						sink = f(input)
+						sink = ht.directString(inputString)
+					}
+				})
+			}
+			if ht.digestBytes != nil {
+				b.Run(fmt.Sprintf("%s,digest,bytes,n=%s", ht.name, nt.name), func(b *testing.B) {
+					b.SetBytes(int64(len(input)))
+					for i := 0; i < b.N; i++ {
+						sink = ht.digestBytes(input)
+					}
+				})
+			}
+			if ht.digestString != nil {
+				b.Run(fmt.Sprintf("%s,digest,string,n=%s", ht.name, nt.name), func(b *testing.B) {
+					b.SetBytes(int64(len(input)))
+					for i := 0; i < b.N; i++ {
+						sink = ht.digestString(inputString)
 					}
 				})
 			}
