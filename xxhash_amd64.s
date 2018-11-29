@@ -172,7 +172,7 @@ finalize:
 // writeBlocks uses the same registers as above except that it uses AX to store
 // the x pointer.
 
-// func writeBlocks(x *xxh, b []byte) int
+// func writeBlocks(x *Digest, b []byte) int
 TEXT ·writeBlocks(SB), NOSPLIT, $0-40
 	// Load fixed primes needed for round.
 	MOVQ ·prime1v(SB), R13

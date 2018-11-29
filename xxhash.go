@@ -4,7 +4,6 @@ package xxhash
 
 import (
 	"encoding/binary"
-	"hash"
 )
 
 const (
@@ -29,7 +28,8 @@ var (
 	prime5v = prime5
 )
 
-type xxh struct {
+// Digest implements hash.Hash64.
+type Digest struct {
 	v1    uint64
 	v2    uint64
 	v3    uint64
@@ -39,14 +39,20 @@ type xxh struct {
 	n     int // how much of mem is used
 }
 
-// New creates a new hash.Hash64 that implements the 64-bit xxHash algorithm.
-func New() hash.Hash64 {
-	var x xxh
+// New creates a new Digest that implements the 64-bit xxHash algorithm.
+//
+// New used to return a hash.Hash64. This resulted in unnecessary memory
+// allocations for the caller, and it prevented the returned value from exposing
+// additional methods like WriteString. Digest still implements hash.Hash64, so
+// callers may continue to use it as before.
+func New() *Digest {
+	var x Digest
 	x.Reset()
 	return &x
 }
 
-func (x *xxh) Reset() {
+// Reset clears the Digest's state so that it can be reused.
+func (x *Digest) Reset() {
 	x.n = 0
 	x.total = 0
 	x.v1 = prime1v + prime2
@@ -55,11 +61,14 @@ func (x *xxh) Reset() {
 	x.v4 = -prime1v
 }
 
-func (x *xxh) Size() int      { return 8 }
-func (x *xxh) BlockSize() int { return 32 }
+// Size always returns 8 bytes.
+func (x *Digest) Size() int { return 8 }
+
+// BlockSize always returns 32 bytes.
+func (x *Digest) BlockSize() int { return 32 }
 
 // Write adds more data to x. It always returns len(b), nil.
-func (x *xxh) Write(b []byte) (n int, err error) {
+func (x *Digest) Write(b []byte) (n int, err error) {
 	n = len(b)
 	x.total += len(b)
 
@@ -94,7 +103,8 @@ func (x *xxh) Write(b []byte) (n int, err error) {
 	return
 }
 
-func (x *xxh) Sum(b []byte) []byte {
+// Sum appends the current hash to b and returns the resulting slice.
+func (x *Digest) Sum(b []byte) []byte {
 	s := x.Sum64()
 	return append(
 		b,
@@ -109,7 +119,8 @@ func (x *xxh) Sum(b []byte) []byte {
 	)
 }
 
-func (x *xxh) Sum64() uint64 {
+// Sum64 returns the current hash.
+func (x *Digest) Sum64() uint64 {
 	var h uint64
 
 	if x.total >= 32 {
