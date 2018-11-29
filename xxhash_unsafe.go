@@ -28,3 +28,14 @@ func Sum64String(s string) uint64 {
 	bh.Cap = len(s)
 	return Sum64(b)
 }
+
+// WriteString adds more data to x. It always returns len(s), nil.
+// It may be faster than Write([]byte(s)) by avoiding a copy.
+func (x *Digest) WriteString(s string) (n int, err error) {
+	var b []byte
+	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
+	bh.Data = (*reflect.StringHeader)(unsafe.Pointer(&s)).Data
+	bh.Len = len(s)
+	bh.Cap = len(s)
+	return x.Write(b)
+}

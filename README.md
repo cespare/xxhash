@@ -27,6 +27,7 @@ The type Digest implements hash.Hash64. Its key methods are:
 
 ```
 func (*Digest) Write([]byte) (int, error)
+func (*Digest) WriteString(string) (int, error)
 func (*Digest) Sum64() uint64
 ```
 
