@@ -43,6 +43,7 @@ func TestSum(t *testing.T) {
 	} {
 		for chunkSize := 1; chunkSize <= len(tt.input); chunkSize++ {
 			x := New()
+			y := New() // same as x but uses WriteString
 			for j := 0; j < len(tt.input); j += chunkSize {
 				end := j + chunkSize
 				if end > len(tt.input) {
@@ -54,9 +55,18 @@ func TestSum(t *testing.T) {
 					t.Fatalf("[i=%d,chunkSize=%d] Write: got (%d, %v); want (%d, nil)",
 						i, chunkSize, n, err, len(chunk))
 				}
+				n, err = y.WriteString(string(chunk))
+				if err != nil || n != len(chunk) {
+					t.Fatalf("[i=%d,chunkSize=%d] WriteString: got (%d, %v); want (%d, nil)",
+						i, chunkSize, n, err, len(chunk))
+				}
 			}
 			if got := x.Sum64(); got != tt.want {
 				t.Fatalf("[i=%d,chunkSize=%d] got 0x%x; want 0x%x",
+					i, chunkSize, got, tt.want)
+			}
+			if got := y.Sum64(); got != tt.want {
+				t.Fatalf("[i=%d,chunkSize=%d] string: got 0x%x; want 0x%x",
 					i, chunkSize, got, tt.want)
 			}
 			var b [8]byte
@@ -115,7 +125,7 @@ var benchmarks = []struct {
 		},
 		digestString: func(s string) uint64 {
 			h := New()
-			h.Write([]byte(s))
+			h.WriteString(s)
 			return h.Sum64()
 		},
 	},

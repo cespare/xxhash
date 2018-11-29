@@ -8,3 +8,8 @@ package xxhash
 func Sum64String(s string) uint64 {
 	return Sum64([]byte(s))
 }
+
+// WriteString adds more data to x. It always returns len(s), nil.
+func (x *Digest) WriteString(s string) (n int, err error) {
+	return x.Write([]byte(s))
+}
