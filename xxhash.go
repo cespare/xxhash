@@ -83,7 +83,8 @@ func (x *xxh) Write(b []byte) (n int, err error) {
 
 	if len(b) >= 32 {
 		// One or more full blocks left.
-		b = writeBlocks(x, b)
+		nw := writeBlocks(x, b)
+		b = b[nw:]
 	}
 
 	// Store any remaining partial block.

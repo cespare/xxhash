@@ -61,15 +61,16 @@ func Sum64(b []byte) uint64 {
 	return h
 }
 
-func writeBlocks(x *xxh, b []byte) []byte {
+func writeBlocks(x *xxh, b []byte) int {
 	v1, v2, v3, v4 := x.v1, x.v2, x.v3, x.v4
-	for len(b) >= 32 {
-		v1 = round(v1, u64(b[0:8:len(b)]))
-		v2 = round(v2, u64(b[8:16:len(b)]))
-		v3 = round(v3, u64(b[16:24:len(b)]))
-		v4 = round(v4, u64(b[24:32:len(b)]))
-		b = b[32:len(b):len(b)]
+	i := 0
+	for i <= len(b)-32 {
+		v1 = round(v1, u64(b[i+0:i+8:len(b)]))
+		v2 = round(v2, u64(b[i+8:i+16:len(b)]))
+		v3 = round(v3, u64(b[i+16:i+24:len(b)]))
+		v4 = round(v4, u64(b[i+24:i+32:len(b)]))
+		i += 32
 	}
 	x.v1, x.v2, x.v3, x.v4 = v1, v2, v3, v4
-	return b
+	return i
 }
