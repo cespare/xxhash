@@ -22,8 +22,8 @@ package xxhash
 //}
 
 //func TestWriteBlocksASM(t *testing.T) {
-//        x0 := New().(*xxh)
-//        x1 := New().(*xxh)
+//        x0 := New().(*Digest)
+//        x1 := New().(*Digest)
 //        for i := 32; i < 500; i++ {
 //                b := make([]byte, i)
 //                for j := range b {

@@ -8,18 +8,27 @@ xxhash is a Go implementation of the 64-bit
 high-quality hashing algorithm that is much faster than anything in the Go
 standard library.
 
-The API is very small, taking its cue from the other hashing packages in the
-standard library:
+The API is fairly small:
 
-    $ go doc github.com/cespare/xxhash                                                                                                                                                                                              !
-    package xxhash // import "github.com/cespare/xxhash"
+```
+$ go doc github.com/cespare/xxhash
+package xxhash // import "github.com/cespare/xxhash"
 
-    Package xxhash implements the 64-bit variant of xxHash (XXH64) as described
-    at http://cyan4973.github.io/xxHash/.
+Package xxhash implements the 64-bit variant of xxHash (XXH64) as described
+at http://cyan4973.github.io/xxHash/.
 
-    func New() hash.Hash64
-    func Sum64(b []byte) uint64
-    func Sum64String(s string) uint64
+func Sum64(b []byte) uint64
+func Sum64String(s string) uint64
+type Digest struct{ ... }
+    func New() *Digest
+```
+
+The type Digest implements hash.Hash64. Its key methods are:
+
+```
+func (*Digest) Write([]byte) (int, error)
+func (*Digest) Sum64() uint64
+```
 
 This implementation provides a fast pure-Go implementation and an even faster
 assembly implementation for amd64.
