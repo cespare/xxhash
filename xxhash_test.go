@@ -13,18 +13,6 @@ import (
 	"github.com/spaolacci/murmur3"
 )
 
-var result uint64
-
-func BenchmarkStringHash(b *testing.B) {
-	const s = "abcdefghijklmnop"
-	var r uint64
-	b.ReportAllocs()
-	for n := 0; n < b.N; n++ {
-		r = Sum64([]byte(s))
-	}
-	result = r
-}
-
 func TestAll(t *testing.T) {
 	for _, tt := range []struct {
 		name  string
@@ -106,6 +94,36 @@ func TestReset(t *testing.T) {
 
 	if h0 != h1 {
 		t.Errorf("0x%x != 0x%x", h0, h1)
+	}
+}
+
+func TestAllocs(t *testing.T) {
+	const shortStr = "abcdefghijklmnop"
+	// Sum64([]byte(shortString)) shouldn't allocate because the
+	// intermediate []byte ought not to escape.
+	// (See https://github.com/cespare/xxhash/pull/2.)
+	t.Run("Sum64", func(t *testing.T) {
+		testAllocs(t, func() {
+			sink = Sum64([]byte(shortStr))
+		})
+	})
+	// Creating and using a Digest shouldn't allocate because its methods
+	// shouldn't make it escape. (A previous version of New returned a
+	// hash.Hash64 which forces an allocation.)
+	t.Run("Digest", func(t *testing.T) {
+		b := []byte("asdf")
+		testAllocs(t, func() {
+			d := New()
+			d.Write(b)
+			sink = d.Sum64()
+		})
+	})
+}
+
+func testAllocs(t *testing.T, fn func()) {
+	t.Helper()
+	if allocs := int(testing.AllocsPerRun(10, fn)); allocs > 0 {
+		t.Fatalf("got %d allocation(s) (want zero)", allocs)
 	}
 }
 
