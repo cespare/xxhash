@@ -39,12 +39,7 @@ type Digest struct {
 	n     int // how much of mem is used
 }
 
-// New creates a new Digest that implements the 64-bit xxHash algorithm.
-//
-// New used to return a hash.Hash64. This resulted in unnecessary memory
-// allocations for the caller, and it prevented the returned value from exposing
-// additional methods like WriteString. Digest still implements hash.Hash64, so
-// callers may continue to use it as before.
+// New creates a new Digest that computes the 64-bit xxHash algorithm.
 func New() *Digest {
 	var d Digest
 	d.Reset()
