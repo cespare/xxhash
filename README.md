@@ -8,22 +8,16 @@ xxhash is a Go implementation of the 64-bit
 high-quality hashing algorithm that is much faster than anything in the Go
 standard library.
 
-The API is fairly small:
+This package provides a straightforward API:
 
 ```
-$ go doc github.com/cespare/xxhash
-package xxhash // import "github.com/cespare/xxhash"
-
-Package xxhash implements the 64-bit variant of xxHash (XXH64) as described
-at http://cyan4973.github.io/xxHash/.
-
 func Sum64(b []byte) uint64
 func Sum64String(s string) uint64
 type Digest struct{ ... }
     func New() *Digest
 ```
 
-The type Digest implements hash.Hash64. Its key methods are:
+The `Digest` type implements hash.Hash64. Its key methods are:
 
 ```
 func (*Digest) Write([]byte) (int, error)
@@ -37,22 +31,21 @@ assembly implementation for amd64.
 ## Benchmarks
 
 Here are some quick benchmarks comparing the pure-Go and assembly
-implementations of Sum64 against another popular Go XXH64 implementation,
-[github.com/OneOfOne/xxhash](https://github.com/OneOfOne/xxhash):
+implementations of Sum64.
 
-| input size | OneOfOne | cespare (purego) | cespare |
-| --- | --- | --- | --- |
-| 5 B   |  416 MB/s | 720 MB/s |  872 MB/s  |
-| 100 B | 3980 MB/s | 5013 MB/s | 5252 MB/s  |
-| 4 KB  | 12727 MB/s | 12999 MB/s | 13026 MB/s |
-| 10 MB | 9879 MB/s | 10775 MB/s | 10913 MB/s  |
+| input size | purego | asm |
+| --- | --- | --- |
+| 5 B   |  979.66 MB/s |  1291.17 MB/s  |
+| 100 B | 7475.26 MB/s | 7973.40 MB/s  |
+| 4 KB  | 17573.46 MB/s | 17602.65 MB/s |
+| 10 MB | 17131.46 MB/s | 17142.16 MB/s |
 
-These numbers were generated with:
+These numbers were generated on Ubuntu 18.04 with an Intel i7-8700K CPU using
+the following commands under Go 1.11.2:
 
 ```
-$ go test -benchtime 10s -bench '/OneOfOne,'
-$ go test -tags purego -benchtime 10s -bench '/xxhash,'
-$ go test -benchtime 10s -bench '/xxhash,'
+$ go test -tags purego -benchtime 10s -bench '/xxhash,direct,bytes'
+$ go test -benchtime 10s -bench '/xxhash,direct,bytes'
 ```
 
 ## Projects using this package
