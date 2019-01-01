@@ -25,63 +25,70 @@ func BenchmarkStringHash(b *testing.B) {
 	result = r
 }
 
-func TestSum(t *testing.T) {
-	for i, tt := range []struct {
+func TestAll(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
 		input string
 		want  uint64
 	}{
-		{"", 0xef46db3751d8e999},
-		{"a", 0xd24ec4f1a98c6e5b},
-		{"as", 0x1c330fb2d66be179},
-		{"asd", 0x631c37ce72a97393},
-		{"asdf", 0x415872f599cea71e},
+		{"empty", "", 0xef46db3751d8e999},
+		{"a", "a", 0xd24ec4f1a98c6e5b},
+		{"as", "as", 0x1c330fb2d66be179},
+		{"asd", "asd", 0x631c37ce72a97393},
+		{"asdf", "asdf", 0x415872f599cea71e},
 		{
+			"len=63",
 			// Exactly 63 characters, which exercises all code paths.
 			"Call me Ishmael. Some years ago--never mind how long precisely-",
 			0x02a2e85470d6fd96,
 		},
 	} {
 		for chunkSize := 1; chunkSize <= len(tt.input); chunkSize++ {
-			x := New()
-			y := New() // same as x but uses WriteString
-			for j := 0; j < len(tt.input); j += chunkSize {
-				end := j + chunkSize
-				if end > len(tt.input) {
-					end = len(tt.input)
-				}
-				chunk := []byte(tt.input[j:end])
-				n, err := x.Write(chunk)
-				if err != nil || n != len(chunk) {
-					t.Fatalf("[i=%d,chunkSize=%d] Write: got (%d, %v); want (%d, nil)",
-						i, chunkSize, n, err, len(chunk))
-				}
-				n, err = y.WriteString(string(chunk))
-				if err != nil || n != len(chunk) {
-					t.Fatalf("[i=%d,chunkSize=%d] WriteString: got (%d, %v); want (%d, nil)",
-						i, chunkSize, n, err, len(chunk))
-				}
-			}
-			if got := x.Sum64(); got != tt.want {
-				t.Fatalf("[i=%d,chunkSize=%d] got 0x%x; want 0x%x",
-					i, chunkSize, got, tt.want)
-			}
-			if got := y.Sum64(); got != tt.want {
-				t.Fatalf("[i=%d,chunkSize=%d] string: got 0x%x; want 0x%x",
-					i, chunkSize, got, tt.want)
-			}
-			var b [8]byte
-			binary.BigEndian.PutUint64(b[:], tt.want)
-			if got := x.Sum(nil); !bytes.Equal(got, b[:]) {
-				t.Fatalf("[i=%d,chunkSize=%d] Sum: got %v; want %v",
-					i, chunkSize, got, b[:])
-			}
+			name := fmt.Sprintf("%s,chunkSize=%d", tt.name, chunkSize)
+			t.Run(name, func(t *testing.T) {
+				testDigest(t, tt.input, chunkSize, tt.want)
+			})
 		}
-		if got := Sum64([]byte(tt.input)); got != tt.want {
-			t.Fatalf("[i=%d] Sum64: got 0x%x; want 0x%x", i, got, tt.want)
+		t.Run(tt.name, func(t *testing.T) { testSum(t, tt.input, tt.want) })
+	}
+}
+
+func testDigest(t *testing.T, input string, chunkSize int, want uint64) {
+	d := New()
+	ds := New() // uses WriteString
+	for i := 0; i < len(input); i += chunkSize {
+		chunk := input[i:]
+		if len(chunk) > chunkSize {
+			chunk = chunk[:chunkSize]
 		}
-		if got := Sum64String(tt.input); got != tt.want {
-			t.Fatalf("[i=%d] Sum64String: got 0x%x; want 0x%x", i, got, tt.want)
+		n, err := d.Write([]byte(chunk))
+		if err != nil || n != len(chunk) {
+			t.Fatalf("Digest.Write: got (%d, %v); want (%d, nil)", n, err, len(chunk))
 		}
+		n, err = ds.WriteString(chunk)
+		if err != nil || n != len(chunk) {
+			t.Fatalf("Digest.WriteString: got (%d, %v); want (%d, nil)", n, err, len(chunk))
+		}
+	}
+	if got := d.Sum64(); got != want {
+		t.Fatalf("Digest.Sum64: got 0x%x; want 0x%x", got, want)
+	}
+	if got := ds.Sum64(); got != want {
+		t.Fatalf("Digest.Sum64 (WriteString): got 0x%x; want 0x%x", got, want)
+	}
+	var b [8]byte
+	binary.BigEndian.PutUint64(b[:], want)
+	if got := d.Sum(nil); !bytes.Equal(got, b[:]) {
+		t.Fatalf("Sum: got %v; want %v", got, b[:])
+	}
+}
+
+func testSum(t *testing.T, input string, want uint64) {
+	if got := Sum64([]byte(input)); got != want {
+		t.Fatalf("Sum64: got 0x%x; want 0x%x", got, want)
+	}
+	if got := Sum64String(input); got != want {
+		t.Fatalf("Sum64String: got 0x%x; want 0x%x", got, want)
 	}
 }
 
@@ -102,10 +109,7 @@ func TestReset(t *testing.T) {
 	}
 }
 
-var (
-	sink  uint64
-	sinkb []byte
-)
+var sink uint64
 
 var benchmarks = []struct {
 	name         string
@@ -181,7 +185,7 @@ var benchmarks = []struct {
 		},
 	},
 	{
-		name: "fnv1a",
+		name: "FNV-1a",
 		digestBytes: func(b []byte) uint64 {
 			h := fnv.New64()
 			h.Write(b)
@@ -196,53 +200,59 @@ var benchmarks = []struct {
 }
 
 func BenchmarkHashes(b *testing.B) {
-	for _, ht := range benchmarks {
-		for _, nt := range []struct {
+	for _, bb := range benchmarks {
+		for _, benchSize := range []struct {
 			name string
 			n    int
 		}{
-			{"5 B", 5},
-			{"100 B", 100},
-			{"4 KB", 4e3},
-			{"10 MB", 10e6},
+			{"5B", 5},
+			{"100B", 100},
+			{"4KB", 4e3},
+			{"10MB", 10e6},
 		} {
-			input := make([]byte, nt.n)
+			input := make([]byte, benchSize.n)
 			for i := range input {
 				input[i] = byte(i)
 			}
 			inputString := string(input)
-			if ht.directBytes != nil {
-				b.Run(fmt.Sprintf("%s,direct,bytes,n=%s", ht.name, nt.name), func(b *testing.B) {
-					b.SetBytes(int64(len(input)))
-					for i := 0; i < b.N; i++ {
-						sink = ht.directBytes(input)
-					}
+			if bb.directBytes != nil {
+				name := fmt.Sprintf("%s,direct,bytes,n=%s", bb.name, benchSize.name)
+				b.Run(name, func(b *testing.B) {
+					benchmarkHashBytes(b, input, bb.directBytes)
 				})
 			}
-			if ht.directString != nil {
-				b.Run(fmt.Sprintf("%s,direct,string,n=%s", ht.name, nt.name), func(b *testing.B) {
-					b.SetBytes(int64(len(input)))
-					for i := 0; i < b.N; i++ {
-						sink = ht.directString(inputString)
-					}
+			if bb.directString != nil {
+				name := fmt.Sprintf("%s,direct,string,n=%s", bb.name, benchSize.name)
+				b.Run(name, func(b *testing.B) {
+					benchmarkHashString(b, inputString, bb.directString)
 				})
 			}
-			if ht.digestBytes != nil {
-				b.Run(fmt.Sprintf("%s,digest,bytes,n=%s", ht.name, nt.name), func(b *testing.B) {
-					b.SetBytes(int64(len(input)))
-					for i := 0; i < b.N; i++ {
-						sink = ht.digestBytes(input)
-					}
+			if bb.digestBytes != nil {
+				name := fmt.Sprintf("%s,digest,bytes,n=%s", bb.name, benchSize.name)
+				b.Run(name, func(b *testing.B) {
+					benchmarkHashBytes(b, input, bb.digestBytes)
 				})
 			}
-			if ht.digestString != nil {
-				b.Run(fmt.Sprintf("%s,digest,string,n=%s", ht.name, nt.name), func(b *testing.B) {
-					b.SetBytes(int64(len(input)))
-					for i := 0; i < b.N; i++ {
-						sink = ht.digestString(inputString)
-					}
+			if bb.digestString != nil {
+				name := fmt.Sprintf("%s,digest,string,n=%s", bb.name, benchSize.name)
+				b.Run(name, func(b *testing.B) {
+					benchmarkHashString(b, inputString, bb.digestString)
 				})
 			}
 		}
+	}
+}
+
+func benchmarkHashBytes(b *testing.B, input []byte, fn func([]byte) uint64) {
+	b.SetBytes(int64(len(input)))
+	for i := 0; i < b.N; i++ {
+		sink = fn(input)
+	}
+}
+
+func benchmarkHashString(b *testing.B, input string, fn func(string) uint64) {
+	b.SetBytes(int64(len(input)))
+	for i := 0; i < b.N; i++ {
+		sink = fn(input)
 	}
 }
