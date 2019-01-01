@@ -22,20 +22,20 @@ package xxhash
 //}
 
 //func TestWriteBlocksASM(t *testing.T) {
-//        x0 := New().(*Digest)
-//        x1 := New().(*Digest)
+//        d0 := New().(*Digest)
+//        d1 := New().(*Digest)
 //        for i := 32; i < 500; i++ {
 //                b := make([]byte, i)
 //                for j := range b {
 //                        b[j] = byte(j)
 //                }
-//                pureGo := writeBlocksGo(x0, b)
-//                asm := writeBlocks(x1, b)
+//                pureGo := writeBlocksGo(d0, b)
+//                asm := writeBlocks(d1, b)
 //                if !reflect.DeepEqual(pureGo, asm) {
 //                        t.Fatalf("[i=%d] pure go gave %v; asm gave %v", i, pureGo, asm)
 //                }
-//                if !reflect.DeepEqual(x0, x1) {
-//                        t.Fatalf("[i=%d] pure go had state %v; asm had state %v", i, x0, x1)
+//                if !reflect.DeepEqual(d0, d1) {
+//                        t.Fatalf("[i=%d] pure go had state %v; asm had state %v", i, d0, d1)
 //                }
 //        }
 //}

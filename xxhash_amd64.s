@@ -170,9 +170,9 @@ finalize:
 	RET
 
 // writeBlocks uses the same registers as above except that it uses AX to store
-// the x pointer.
+// the d pointer.
 
-// func writeBlocks(x *Digest, b []byte) int
+// func writeBlocks(d *Digest, b []byte) int
 TEXT ·writeBlocks(SB), NOSPLIT, $0-40
 	// Load fixed primes needed for round.
 	MOVQ ·prime1v(SB), R13
@@ -184,8 +184,8 @@ TEXT ·writeBlocks(SB), NOSPLIT, $0-40
 	LEAQ (CX)(DX*1), BX
 	SUBQ $32, BX
 
-	// Load vN from x.
-	MOVQ x+0(FP), AX
+	// Load vN from d.
+	MOVQ d+0(FP), AX
 	MOVQ 0(AX), R8   // v1
 	MOVQ 8(AX), R9   // v2
 	MOVQ 16(AX), R10 // v3
@@ -202,7 +202,7 @@ blockLoop:
 	CMPQ CX, BX
 	JLE  blockLoop
 
-	// Copy vN back to x.
+	// Copy vN back to d.
 	MOVQ R8, 0(AX)
 	MOVQ R9, 8(AX)
 	MOVQ R10, 16(AX)

@@ -46,66 +46,66 @@ type Digest struct {
 // additional methods like WriteString. Digest still implements hash.Hash64, so
 // callers may continue to use it as before.
 func New() *Digest {
-	var x Digest
-	x.Reset()
-	return &x
+	var d Digest
+	d.Reset()
+	return &d
 }
 
 // Reset clears the Digest's state so that it can be reused.
-func (x *Digest) Reset() {
-	x.n = 0
-	x.total = 0
-	x.v1 = prime1v + prime2
-	x.v2 = prime2
-	x.v3 = 0
-	x.v4 = -prime1v
+func (d *Digest) Reset() {
+	d.n = 0
+	d.total = 0
+	d.v1 = prime1v + prime2
+	d.v2 = prime2
+	d.v3 = 0
+	d.v4 = -prime1v
 }
 
 // Size always returns 8 bytes.
-func (x *Digest) Size() int { return 8 }
+func (d *Digest) Size() int { return 8 }
 
 // BlockSize always returns 32 bytes.
-func (x *Digest) BlockSize() int { return 32 }
+func (d *Digest) BlockSize() int { return 32 }
 
-// Write adds more data to x. It always returns len(b), nil.
-func (x *Digest) Write(b []byte) (n int, err error) {
+// Write adds more data to d. It always returns len(b), nil.
+func (d *Digest) Write(b []byte) (n int, err error) {
 	n = len(b)
-	x.total += len(b)
+	d.total += len(b)
 
-	if x.n+len(b) < 32 {
+	if d.n+len(b) < 32 {
 		// This new data doesn't even fill the current block.
-		copy(x.mem[x.n:], b)
-		x.n += len(b)
+		copy(d.mem[d.n:], b)
+		d.n += len(b)
 		return
 	}
 
-	if x.n > 0 {
+	if d.n > 0 {
 		// Finish off the partial block.
-		copy(x.mem[x.n:], b)
-		x.v1 = round(x.v1, u64(x.mem[0:8]))
-		x.v2 = round(x.v2, u64(x.mem[8:16]))
-		x.v3 = round(x.v3, u64(x.mem[16:24]))
-		x.v4 = round(x.v4, u64(x.mem[24:32]))
-		b = b[32-x.n:]
-		x.n = 0
+		copy(d.mem[d.n:], b)
+		d.v1 = round(d.v1, u64(d.mem[0:8]))
+		d.v2 = round(d.v2, u64(d.mem[8:16]))
+		d.v3 = round(d.v3, u64(d.mem[16:24]))
+		d.v4 = round(d.v4, u64(d.mem[24:32]))
+		b = b[32-d.n:]
+		d.n = 0
 	}
 
 	if len(b) >= 32 {
 		// One or more full blocks left.
-		nw := writeBlocks(x, b)
+		nw := writeBlocks(d, b)
 		b = b[nw:]
 	}
 
 	// Store any remaining partial block.
-	copy(x.mem[:], b)
-	x.n = len(b)
+	copy(d.mem[:], b)
+	d.n = len(b)
 
 	return
 }
 
 // Sum appends the current hash to b and returns the resulting slice.
-func (x *Digest) Sum(b []byte) []byte {
-	s := x.Sum64()
+func (d *Digest) Sum(b []byte) []byte {
+	s := d.Sum64()
 	return append(
 		b,
 		byte(s>>56),
@@ -120,35 +120,35 @@ func (x *Digest) Sum(b []byte) []byte {
 }
 
 // Sum64 returns the current hash.
-func (x *Digest) Sum64() uint64 {
+func (d *Digest) Sum64() uint64 {
 	var h uint64
 
-	if x.total >= 32 {
-		v1, v2, v3, v4 := x.v1, x.v2, x.v3, x.v4
+	if d.total >= 32 {
+		v1, v2, v3, v4 := d.v1, d.v2, d.v3, d.v4
 		h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 		h = mergeRound(h, v1)
 		h = mergeRound(h, v2)
 		h = mergeRound(h, v3)
 		h = mergeRound(h, v4)
 	} else {
-		h = x.v3 + prime5
+		h = d.v3 + prime5
 	}
 
-	h += uint64(x.total)
+	h += uint64(d.total)
 
-	i, end := 0, x.n
+	i, end := 0, d.n
 	for ; i+8 <= end; i += 8 {
-		k1 := round(0, u64(x.mem[i:i+8]))
+		k1 := round(0, u64(d.mem[i:i+8]))
 		h ^= k1
 		h = rol27(h)*prime1 + prime4
 	}
 	if i+4 <= end {
-		h ^= uint64(u32(x.mem[i:i+4])) * prime1
+		h ^= uint64(u32(d.mem[i:i+4])) * prime1
 		h = rol23(h)*prime2 + prime3
 		i += 4
 	}
 	for i < end {
-		h ^= uint64(x.mem[i]) * prime5
+		h ^= uint64(d.mem[i]) * prime5
 		h = rol11(h) * prime1
 		i++
 	}

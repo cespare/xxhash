@@ -87,15 +87,15 @@ func TestSum(t *testing.T) {
 
 func TestReset(t *testing.T) {
 	parts := []string{"The quic", "k br", "o", "wn fox jumps", " ov", "er the lazy ", "dog."}
-	x := New()
+	d := New()
 	for _, part := range parts {
-		x.Write([]byte(part))
+		d.Write([]byte(part))
 	}
-	h0 := x.Sum64()
+	h0 := d.Sum64()
 
-	x.Reset()
-	x.Write([]byte(strings.Join(parts, "")))
-	h1 := x.Sum64()
+	d.Reset()
+	d.Write([]byte(strings.Join(parts, "")))
+	h1 := d.Sum64()
 
 	if h0 != h1 {
 		t.Errorf("0x%x != 0x%x", h0, h1)
