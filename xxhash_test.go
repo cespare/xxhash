@@ -97,6 +97,43 @@ func TestReset(t *testing.T) {
 	}
 }
 
+func TestBinaryMarshaling(t *testing.T) {
+	d := New()
+	d.WriteString("abc")
+	b, err := d.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
+	}
+	d = New()
+	d.WriteString("junk")
+	if err := d.UnmarshalBinary(b); err != nil {
+		t.Fatal(err)
+	}
+	d.WriteString("def")
+	if got, want := d.Sum64(), Sum64String("abcdef"); got != want {
+		t.Fatalf("after MarshalBinary+UnmarshalBinary, got 0x%x; want 0x%x", got, want)
+	}
+
+	d0 := New()
+	d1 := New()
+	for i := 0; i < 64; i++ {
+		b, err := d0.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+		d0 = new(Digest)
+		if err := d0.UnmarshalBinary(b); err != nil {
+			t.Fatal(err)
+		}
+		if got, want := d0.Sum64(), d1.Sum64(); got != want {
+			t.Fatalf("after %d Writes, unmarshaled Digest gave sum 0x%x; want 0x%x", i, got, want)
+		}
+
+		d0.Write([]byte{'a'})
+		d1.Write([]byte{'a'})
+	}
+}
+
 func TestAllocs(t *testing.T) {
 	const shortStr = "abcdefghijklmnop"
 	// Sum64([]byte(shortString)) shouldn't allocate because the

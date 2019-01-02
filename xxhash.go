@@ -4,6 +4,7 @@ package xxhash
 
 import (
 	"encoding/binary"
+	"errors"
 	"math/bits"
 )
 
@@ -35,7 +36,7 @@ type Digest struct {
 	v2    uint64
 	v3    uint64
 	v4    uint64
-	total int
+	total uint64
 	mem   [32]byte
 	n     int // how much of mem is used
 }
@@ -49,12 +50,12 @@ func New() *Digest {
 
 // Reset clears the Digest's state so that it can be reused.
 func (d *Digest) Reset() {
-	d.n = 0
-	d.total = 0
 	d.v1 = prime1v + prime2
 	d.v2 = prime2
 	d.v3 = 0
 	d.v4 = -prime1v
+	d.total = 0
+	d.n = 0
 }
 
 // Size always returns 8 bytes.
@@ -66,12 +67,12 @@ func (d *Digest) BlockSize() int { return 32 }
 // Write adds more data to d. It always returns len(b), nil.
 func (d *Digest) Write(b []byte) (n int, err error) {
 	n = len(b)
-	d.total += len(b)
+	d.total += uint64(n)
 
-	if d.n+len(b) < 32 {
+	if d.n+n < 32 {
 		// This new data doesn't even fill the current block.
 		copy(d.mem[d.n:], b)
-		d.n += len(b)
+		d.n += n
 		return
 	}
 
@@ -130,7 +131,7 @@ func (d *Digest) Sum64() uint64 {
 		h = d.v3 + prime5
 	}
 
-	h += uint64(d.total)
+	h += d.total
 
 	i, end := 0, d.n
 	for ; i+8 <= end; i += 8 {
@@ -156,6 +157,56 @@ func (d *Digest) Sum64() uint64 {
 	h ^= h >> 32
 
 	return h
+}
+
+const (
+	magic         = "xxh\x06"
+	marshaledSize = len(magic) + 8*5 + 32
+)
+
+// MarshalBinary implements the encoding.BinaryMarshaler interface.
+func (d *Digest) MarshalBinary() ([]byte, error) {
+	b := make([]byte, 0, marshaledSize)
+	b = append(b, magic...)
+	b = appendUint64(b, d.v1)
+	b = appendUint64(b, d.v2)
+	b = appendUint64(b, d.v3)
+	b = appendUint64(b, d.v4)
+	b = appendUint64(b, d.total)
+	b = append(b, d.mem[:d.n]...)
+	b = b[:len(b)+len(d.mem)-d.n]
+	return b, nil
+}
+
+// UnmarshalBinary implements the encoding.BinaryUnmarshaler interface.
+func (d *Digest) UnmarshalBinary(b []byte) error {
+	if len(b) < len(magic) || string(b[:len(magic)]) != magic {
+		return errors.New("xxhash: invalid hash state identifier")
+	}
+	if len(b) != marshaledSize {
+		return errors.New("xxhash: invalid hash state size")
+	}
+	b = b[len(magic):]
+	b, d.v1 = consumeUint64(b)
+	b, d.v2 = consumeUint64(b)
+	b, d.v3 = consumeUint64(b)
+	b, d.v4 = consumeUint64(b)
+	b, d.total = consumeUint64(b)
+	copy(d.mem[:], b)
+	b = b[len(d.mem):]
+	d.n = int(d.total % uint64(len(d.mem)))
+	return nil
+}
+
+func appendUint64(b []byte, x uint64) []byte {
+	var a [8]byte
+	binary.LittleEndian.PutUint64(a[:], x)
+	return append(b, a[:]...)
+}
+
+func consumeUint64(b []byte) ([]byte, uint64) {
+	x := u64(b)
+	return b[8:], x
 }
 
 func u64(b []byte) uint64 { return binary.LittleEndian.Uint64(b) }
