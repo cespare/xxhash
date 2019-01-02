@@ -28,6 +28,17 @@ var (
 	prime5v = prime5
 )
 
+// Sum64 computes the 64-bit xxHash digest of b.
+func Sum64(b []byte) uint64 {
+	return sum64(b)
+}
+
+// Sum64String computes the 64-bit xxHash digest of s.
+// It may be faster than Sum64([]byte(s)) by avoiding a copy.
+func Sum64String(s string) uint64 {
+	return sum64String(s)
+}
+
 // Digest implements hash.Hash64.
 type Digest struct {
 	v1    uint64
@@ -96,6 +107,12 @@ func (d *Digest) Write(b []byte) (n int, err error) {
 	d.n = len(b)
 
 	return
+}
+
+// WriteString adds more data to d. It always returns len(s), nil.
+// It may be faster than Write([]byte(s)) by avoiding a copy.
+func (d *Digest) WriteString(s string) (n int, err error) {
+	return d.writeString(s)
 }
 
 // Sum appends the current hash to b and returns the resulting slice.

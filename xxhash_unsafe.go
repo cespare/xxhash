@@ -23,9 +23,7 @@ import (
 // for strings to squeeze out a bit more speed. Mid-stack inlining should
 // eventually fix this.
 
-// Sum64String computes the 64-bit xxHash digest of s.
-// It may be faster than Sum64([]byte(s)) by avoiding a copy.
-func Sum64String(s string) uint64 {
+func sum64String(s string) uint64 {
 	var b []byte
 	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
 	bh.Data = (*reflect.StringHeader)(unsafe.Pointer(&s)).Data
@@ -34,9 +32,7 @@ func Sum64String(s string) uint64 {
 	return Sum64(b)
 }
 
-// WriteString adds more data to d. It always returns len(s), nil.
-// It may be faster than Write([]byte(s)) by avoiding a copy.
-func (d *Digest) WriteString(s string) (n int, err error) {
+func (d *Digest) writeString(s string) (n int, err error) {
 	var b []byte
 	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
 	bh.Data = (*reflect.StringHeader)(unsafe.Pointer(&s)).Data
