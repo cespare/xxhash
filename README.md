@@ -10,7 +10,7 @@ standard library.
 
 This package provides a straightforward API:
 
-```
+```go
 func Sum64(b []byte) uint64
 func Sum64String(s string) uint64
 type Digest struct{ ... }
@@ -19,7 +19,7 @@ type Digest struct{ ... }
 
 The `Digest` type implements hash.Hash64. Its key methods are:
 
-```
+```go
 func (*Digest) Write([]byte) (int, error)
 func (*Digest) WriteString(string) (int, error)
 func (*Digest) Sum64() uint64
