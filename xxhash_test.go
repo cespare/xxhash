@@ -244,12 +244,12 @@ var benchmarks = []struct {
 		digestBytes: func(b []byte) uint64 {
 			h := fnv.New64()
 			h.Write(b)
-			return uint64(h.Sum64())
+			return h.Sum64()
 		},
 		digestString: func(s string) uint64 {
 			h := fnv.New64a()
 			h.Write([]byte(s))
-			return uint64(h.Sum64())
+			return h.Sum64()
 		},
 	},
 }

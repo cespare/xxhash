@@ -16,7 +16,7 @@ If no filenames are provided or only - is given, input is read from stdin.
 `, os.Args[0])
 		os.Exit(1)
 	}
-	if len(os.Args) < 2 || len(os.Args) == 2 && string(os.Args[1]) == "-" {
+	if len(os.Args) < 2 || len(os.Args) == 2 && os.Args[1] == "-" {
 		printHash(os.Stdin, "-")
 		return
 	}
