@@ -28,6 +28,12 @@ func (*Digest) Sum64() uint64
 This implementation provides a fast pure-Go implementation and an even faster
 assembly implementation for amd64.
 
+## Compatibility
+
+This package is in a module and the latest code is in version 2 of the module.
+You need a version of Go with module support (Go 1.11+) to use
+github.com/cespare/xxhash/v2.
+
 ## Benchmarks
 
 Here are some quick benchmarks comparing the pure-Go and assembly
