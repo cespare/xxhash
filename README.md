@@ -31,8 +31,14 @@ assembly implementation for amd64.
 ## Compatibility
 
 This package is in a module and the latest code is in version 2 of the module.
-You need a version of Go with module support (Go 1.11+) to use
-github.com/cespare/xxhash/v2.
+You need a version of Go with at least "minimal module compatibility" to use
+github.com/cespare/xxhash/v2:
+
+* 1.9.7+ for Go 1.9
+* 1.10.3+ for Go 1.10
+* Go 1.11 or later
+
+I recommend using the latest release of Go.
 
 ## Benchmarks
 
