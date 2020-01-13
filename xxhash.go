@@ -5,6 +5,7 @@ package xxhash
 import (
 	"encoding/binary"
 	"errors"
+	"hash"
 	"math/bits"
 )
 
@@ -46,6 +47,10 @@ func New() *Digest {
 	var d Digest
 	d.Reset()
 	return &d
+}
+
+func NewHash64() hash.Hash {
+	return New()
 }
 
 // Reset clears the Digest's state so that it can be reused.
