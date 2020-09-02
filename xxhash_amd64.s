@@ -22,7 +22,7 @@
 // It assumes that R13 has prime1v and R14 has prime2v.
 #define round(r) \
 	MOVQ  (CX), R12 \
-	ADDQ  $8, CX    \
+	LEAQ  8(CX), CX \
 	IMULQ R14, R12  \
 	ADDQ  R12, r    \
 	ROLQ  $31, r    \
@@ -101,7 +101,7 @@ afterBlocks:
 	ADDQ DX, AX
 
 	// Right now BX has len(b)-32, and we want to loop until CX > len(b)-8.
-	ADDQ $24, BX
+	LEAQ 24(BX), BX
 
 	CMPQ CX, BX
 	JG   fourByte
@@ -109,7 +109,7 @@ afterBlocks:
 wordLoop:
 	// Calculate k1.
 	MOVQ  (CX), R8
-	ADDQ  $8, CX
+	LEAQ  8(CX), CX
 	IMULQ R14, R8
 	ROLQ  $31, R8
 	IMULQ R13, R8
@@ -123,12 +123,12 @@ wordLoop:
 	JLE  wordLoop
 
 fourByte:
-	ADDQ $4, BX
+	LEAQ 4(BX), BX
 	CMPQ CX, BX
 	JG   singles
 
 	MOVL  (CX), R8
-	ADDQ  $4, CX
+	LEAQ  4(CX), CX
 	IMULQ R13, R8
 	XORQ  R8, AX
 
@@ -137,13 +137,13 @@ fourByte:
 	ADDQ  ·prime3v(SB), AX
 
 singles:
-	ADDQ $4, BX
+	LEAQ 4(BX), BX
 	CMPQ CX, BX
 	JGE  finalize
 
 singlesLoop:
 	MOVBQZX (CX), R12
-	ADDQ    $1, CX
+	LEAQ    1(CX), CX
 	IMULQ   ·prime5v(SB), R12
 	XORQ    R12, AX
 
