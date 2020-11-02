@@ -7,5 +7,6 @@ go:
   - master
 env:
   - TAGS=""
+  - TAGS="-tags appengine"
   - TAGS="-tags purego"
 script: go test $TAGS -v ./...
