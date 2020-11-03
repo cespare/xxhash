@@ -9,6 +9,7 @@
 // CX	pointer to advance through b
 // DX	n
 // BX	loop end
+// DI	pointer to return value storage
 // R8	v1, k1
 // R9	v2
 // R10	v3
@@ -40,14 +41,25 @@
 
 // func Sum64(b []byte) uint64
 TEXT ·Sum64(SB), NOSPLIT, $0-32
+	MOVQ b_base+0(FP), CX
+	MOVQ b_len+8(FP), DX
+	LEAQ ret+24(FP), DI
+	JMP  sum64<>(SB)
+
+// func Sum64String(s string) uint64
+TEXT ·Sum64String(SB), NOSPLIT, $0-24
+	MOVQ s_base+0(FP), CX
+	MOVQ s_len+8(FP), DX
+	LEAQ ret+16(FP), DI
+	JMP  sum64<>(SB)
+
+// Takes arguments in CX, DX. Stores its return value through DI.
+TEXT sum64<>(SB), NOFRAME+NOSPLIT, $0
 	// Load fixed primes.
 	MOVQ ·prime1v(SB), R13
 	MOVQ ·prime2v(SB), R14
 	MOVQ ·prime4v(SB), R15
 
-	// Load slice.
-	MOVQ b_base+0(FP), CX
-	MOVQ b_len+8(FP), DX
 	LEAQ (CX)(DX*1), BX
 
 	// The first loop limit will be len(b)-32.
@@ -166,7 +178,7 @@ finalize:
 	SHRQ  $32, R12
 	XORQ  R12, AX
 
-	MOVQ AX, ret+24(FP)
+	MOVQ AX, (DI)
 	RET
 
 // writeBlocks uses the same registers as above except that it uses AX to store
