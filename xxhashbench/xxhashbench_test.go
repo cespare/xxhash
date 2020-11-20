@@ -11,6 +11,10 @@ import (
 	"github.com/spaolacci/murmur3"
 )
 
+// TODO: The main benchmarks live in the xxhash package now, so the only purpose
+// of this is to compare different hash functions. Consider deleting xxhashbench
+// or replacing it with a more minimal comparison.
+
 var sink uint64
 
 var benchmarks = []struct {
