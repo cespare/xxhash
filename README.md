@@ -64,5 +64,6 @@ $ go test -benchtime 10s -bench '/xxhash,direct,bytes'
 
 - [InfluxDB](https://github.com/influxdata/influxdb)
 - [Prometheus](https://github.com/prometheus/prometheus)
+- [VictoriaMetrics](https://github.com/VictoriaMetrics/VictoriaMetrics)
 - [FreeCache](https://github.com/coocood/freecache)
 - [FastCache](https://github.com/VictoriaMetrics/fastcache)
