@@ -16,7 +16,7 @@
 // R12	tmp
 // R13	prime1v
 // R14	prime2v
-// R15	prime4v
+// -R15	prime4v- BUG: dynamic link - when dynamic linking, R15 is clobbered by a global variable access and is used here
 
 // round reads from and advances the buffer pointer in CX.
 // It assumes that R13 has prime1v and R14 has prime2v.
@@ -29,21 +29,21 @@
 	IMULQ R13, r
 
 // mergeRound applies a merge round on the two registers acc and val.
-// It assumes that R13 has prime1v, R14 has prime2v, and R15 has prime4v.
+// It assumes that R13 has prime1v, R14 has prime2v.
 #define mergeRound(acc, val) \
 	IMULQ R14, val \
 	ROLQ  $31, val \
 	IMULQ R13, val \
 	XORQ  val, acc \
 	IMULQ R13, acc \
-	ADDQ  R15, acc
+	ADDQ  ·prime4v(SB), acc
 
 // func Sum64(b []byte) uint64
 TEXT ·Sum64(SB), NOSPLIT, $0-32
 	// Load fixed primes.
 	MOVQ ·prime1v(SB), R13
 	MOVQ ·prime2v(SB), R14
-	MOVQ ·prime4v(SB), R15
+	// MOVQ ·prime4v(SB), R15
 
 	// Load slice.
 	MOVQ b_base+0(FP), CX
@@ -117,7 +117,7 @@ wordLoop:
 	XORQ  R8, AX
 	ROLQ  $27, AX
 	IMULQ R13, AX
-	ADDQ  R15, AX
+	ADDQ  ·prime4v(SB), AX
 
 	CMPQ CX, BX
 	JLE  wordLoop
