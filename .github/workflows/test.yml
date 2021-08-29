@@ -49,9 +49,8 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run test via qemu/binfmt
-        # TODO: We only run the main tests, not the ones in dynamic/, because
-        # that would require cgo. If we want to test dynamic linking with other
-        # arches, we probably will need fuller emulation, not qemu user mode.
+        # TODO: Run the dynamic linking tests as well. That is a little more
+        # involved.
         run: go test -v -count 1 -bench . -benchtime 1x
         env:
           GOARCH: ${{ matrix.arch }}
