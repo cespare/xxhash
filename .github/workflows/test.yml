@@ -28,5 +28,30 @@ jobs:
       - name: Test with -tags purego
         run: go test -count 1 -bench . -benchtime 1x -tags purego ./...
 
-# TODO: Test on other architectures. Unfortunately only amd64 is supported
-# by GH Actions. We could use QEMU in the meantime.
+  test-qemu:
+    needs: test
+    strategy:
+      matrix:
+        go-version: [1.16.x, 1.17.x]
+        arch: [386, arm, arm64]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Install QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Run test via qemu/binfmt
+        # TODO: We only run the main tests, not the ones in dynamic/, because
+        # that would require cgo. If we want to test dynamic linking with other
+        # arches, we probably will need fuller emulation, not qemu user mode.
+        run: go test -v -count 1 -bench . -benchtime 1x
+        env:
+          GOARCH: ${{ matrix.arch }}

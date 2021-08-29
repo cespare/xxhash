@@ -12,7 +12,7 @@ import (
 
 const (
 	in   = "Call me Ishmael. Some years ago--never mind how long precisely-"
-	want = 0x02a2e85470d6fd96
+	want = uint64(0x02a2e85470d6fd96)
 )
 
 func TestSum(t *testing.T) {
