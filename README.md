@@ -25,8 +25,9 @@ func (*Digest) WriteString(string) (int, error)
 func (*Digest) Sum64() uint64
 ```
 
-This implementation provides a fast pure-Go implementation and an even faster
-assembly implementation for amd64.
+The package is written with optimized pure Go and also contains an even faster
+assembly implementation for amd64. If desired, the `purego` build tag opts into
+using the Go code even on amd64.
 
 ## Compatibility
 
@@ -47,17 +48,17 @@ implementations of Sum64.
 
 | input size | purego | asm |
 | --- | --- | --- |
-| 5 B   |  979.66 MB/s |  1291.17 MB/s  |
-| 100 B | 7475.26 MB/s | 7973.40 MB/s  |
-| 4 KB  | 17573.46 MB/s | 17602.65 MB/s |
-| 10 MB | 17131.46 MB/s | 17142.16 MB/s |
+| 4 B   |  1052.65 MB/s |  1278.48 MB/s  |
+| 100 B | 6816.82 MB/s | 7881.09 MB/s  |
+| 4 KB  | 11924.07 MB/s | 17323.63 MB/s |
+| 10 MB | 11205.21 MB/s | 15484.85 MB/s |
 
 These numbers were generated on Ubuntu 18.04 with an Intel i7-8700K CPU using
-the following commands under Go 1.11.2:
+the following commands under Go 1.17:
 
 ```
-$ go test -tags purego -benchtime 10s -bench '/xxhash,direct,bytes'
-$ go test -benchtime 10s -bench '/xxhash,direct,bytes'
+go test -tags purego -benchtime 10s -bench 'Sum64$'
+go test -benchtime 10s -bench 'Sum64$'
 ```
 
 ## Projects using this package
