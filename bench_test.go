@@ -10,6 +10,7 @@ var benchmarks = []struct {
 	n    int64
 }{
 	{"4B", 4},
+	{"16B", 16},
 	{"100B", 100},
 	{"4KB", 4e3},
 	{"10MB", 10e6},
