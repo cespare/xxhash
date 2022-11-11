@@ -69,21 +69,23 @@ func (d *Digest) Write(b []byte) (n int, err error) {
 	n = len(b)
 	d.total += uint64(n)
 
+	memleft := d.mem[d.n&(len(d.mem)-1):]
+
 	if d.n+n < 32 {
 		// This new data doesn't even fill the current block.
-		copy(d.mem[d.n:], b)
+		copy(memleft, b)
 		d.n += n
 		return
 	}
 
 	if d.n > 0 {
 		// Finish off the partial block.
-		copy(d.mem[d.n:], b)
+		c := copy(memleft, b)
 		d.v1 = round(d.v1, u64(d.mem[0:8]))
 		d.v2 = round(d.v2, u64(d.mem[8:16]))
 		d.v3 = round(d.v3, u64(d.mem[16:24]))
 		d.v4 = round(d.v4, u64(d.mem[24:32]))
-		b = b[32-d.n:]
+		b = b[c:]
 		d.n = 0
 	}
 
@@ -133,21 +135,20 @@ func (d *Digest) Sum64() uint64 {
 
 	h += d.total
 
-	i, end := 0, d.n
-	for ; i+8 <= end; i += 8 {
-		k1 := round(0, u64(d.mem[i:i+8]))
+	b := d.mem[:d.n&(len(d.mem)-1)]
+	for ; len(b) >= 8; b = b[8:] {
+		k1 := round(0, u64(b[:8]))
 		h ^= k1
 		h = rol27(h)*prime1 + prime4
 	}
-	if i+4 <= end {
-		h ^= uint64(u32(d.mem[i:i+4])) * prime1
+	if len(b) >= 4 {
+		h ^= uint64(u32(b[:4])) * prime1
 		h = rol23(h)*prime2 + prime3
-		i += 4
+		b = b[4:]
 	}
-	for i < end {
-		h ^= uint64(d.mem[i]) * prime5
+	for ; len(b) > 0; b = b[1:] {
+		h ^= uint64(b[0]) * prime5
 		h = rol11(h) * prime1
-		i++
 	}
 
 	h ^= h >> 33
