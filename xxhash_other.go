@@ -37,19 +37,18 @@ func Sum64(b []byte) uint64 {
 
 	h += uint64(n)
 
-	i, end := 0, len(b)
-	for ; i+8 <= end; i += 8 {
-		k1 := round(0, u64(b[i:i+8:len(b)]))
+	for ; len(b) >= 8; b = b[8:] {
+		k1 := round(0, u64(b[:8]))
 		h ^= k1
 		h = rol27(h)*prime1 + prime4
 	}
-	if i+4 <= end {
-		h ^= uint64(u32(b[i:i+4:len(b)])) * prime1
+	if len(b) >= 4 {
+		h ^= uint64(u32(b[:4])) * prime1
 		h = rol23(h)*prime2 + prime3
-		i += 4
+		b = b[4:]
 	}
-	for ; i < end; i++ {
-		h ^= uint64(b[i]) * prime5
+	for ; len(b) > 0; b = b[1:] {
+		h ^= uint64(b[0]) * prime5
 		h = rol11(h) * prime1
 	}
 
