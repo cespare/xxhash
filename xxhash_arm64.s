@@ -1,4 +1,7 @@
-// +build gc,!purego
+//go:build !appengine && gc && !purego
+// +build !appengine
+// +build gc
+// +build !purego
 
 #include "textflag.h"
 
