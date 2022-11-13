@@ -65,7 +65,7 @@ DATA primes<>+32(SB)/8, $2870177450012600261
 GLOBL primes<>(SB), NOPTR|RODATA, $40
 
 // func Sum64(b []byte) uint64
-TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
+TEXT ·Sum64(SB), NOSPLIT, $0-32
 	LDP b_base+0(FP), (p, n)
 
 	LDP  primes<> +0(SB), (prime1, prime2)
@@ -168,7 +168,7 @@ end:
 // func writeBlocks(d *Digest, b []byte) int
 //
 // Assumes len(b) >= 32.
-TEXT ·writeBlocks(SB), NOSPLIT|NOFRAME, $0-40
+TEXT ·writeBlocks(SB), NOSPLIT, $0-40
 	LDP primes<>(SB), (prime1, prime2)
 
 	// Load state. Assume v[1-4] are stored contiguously.
