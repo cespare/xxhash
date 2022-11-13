@@ -5,7 +5,7 @@
 
 #include "textflag.h"
 
-// Register allocation:
+// Registers:
 // AX	h
 // SI	pointer to advance through b
 // DX	n

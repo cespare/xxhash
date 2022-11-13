@@ -5,7 +5,7 @@
 
 #include "textflag.h"
 
-// Register allocation.
+// Registers:
 #define digest	R1
 #define h	R2 // Return value.
 #define p	R3 // Input pointer.
@@ -30,7 +30,7 @@
 	ROR  $64-31, acc         \
 	MUL  prime1, acc         \
 
-// x = round(0, x).
+// round0 performs the operation x = round(0, x).
 #define round0(x) \
 	MUL prime2, x \
 	ROR $64-31, x \
@@ -41,7 +41,8 @@
 	EOR  x, acc                   \
 	MADD acc, prime4, prime1, acc \
 
-// Update v[1-4] with 32-byte blocks. Assumes n >= 32.
+// blocksLoop processes as many 32-byte blocks as possible,
+// updating v1, v2, v3, and v4. It assumes that v >= 32.
 #define blocksLoop() \
 	LSR     $5, n, nblocks  \
 	loop:                   \
@@ -54,8 +55,7 @@
 	SUB     $1, nblocks     \
 	CBNZ    nblocks, loop   \
 
-// The primes are repeated here to ensure that they're stored
-// in a contiguous array, so we can load them with LDP.
+// Store the primes in a contiguous array so we can load them with LDP.
 DATA primes<> +0(SB)/8, $11400714785074694791
 DATA primes<> +8(SB)/8, $14029467366897019727
 DATA primes<>+16(SB)/8, $1609587929392839161
@@ -165,8 +165,6 @@ end:
 	RET
 
 // func writeBlocks(d *Digest, b []byte) int
-//
-// Assumes len(b) >= 32.
 TEXT ·writeBlocks(SB), NOSPLIT, $0-40
 	LDP primes<>(SB), (prime1, prime2)
 
