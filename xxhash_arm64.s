@@ -44,7 +44,6 @@
 // Update v[1-4] with 32-byte blocks. Assumes n >= 32.
 #define blocksLoop() \
 	LSR     $5, n, nblocks  \
-	PCALIGN $16             \
 	loop:                   \
 	LDP.P   16(p), (x1, x2) \
 	LDP.P   16(p), (x3, x4) \
