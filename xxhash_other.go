@@ -15,10 +15,10 @@ func Sum64(b []byte) uint64 {
 	var h uint64
 
 	if n >= 32 {
-		v1 := prime1v + prime2
+		v1 := primes[1] + prime2
 		v2 := prime2
 		v3 := uint64(0)
-		v4 := -prime1v
+		v4 := -primes[1]
 		for len(b) >= 32 {
 			v1 = round(v1, u64(b[0:8:len(b)]))
 			v2 = round(v2, u64(b[8:16:len(b)]))

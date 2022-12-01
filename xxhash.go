@@ -16,19 +16,11 @@ const (
 	prime5 uint64 = 2870177450012600261
 )
 
-// NOTE(caleb): I'm using both consts and vars of the primes. Using consts where
-// possible in the Go code is worth a small (but measurable) performance boost
-// by avoiding some MOVQs. Vars are needed for the asm and also are useful for
-// convenience in the Go code in a few places where we need to intentionally
-// avoid constant arithmetic (e.g., v1 := prime1 + prime2 fails because the
-// result overflows a uint64).
-var (
-	prime1v = prime1
-	prime2v = prime2
-	prime3v = prime3
-	prime4v = prime4
-	prime5v = prime5
-)
+// Store the primes in an array as well.
+//
+// The consts are used when possible in Go code to avoid MOVs but we need a
+// contiguous array of the assembly code.
+var primes = [...]uint64{0, prime1, prime2, prime3, prime4, prime5}
 
 // Digest implements hash.Hash64.
 type Digest struct {
@@ -50,10 +42,10 @@ func New() *Digest {
 
 // Reset clears the Digest's state so that it can be reused.
 func (d *Digest) Reset() {
-	d.v1 = prime1v + prime2
+	d.v1 = primes[1] + prime2
 	d.v2 = prime2
 	d.v3 = 0
-	d.v4 = -prime1v
+	d.v4 = -primes[1]
 	d.total = 0
 	d.n = 0
 }

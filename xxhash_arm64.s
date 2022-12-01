@@ -56,21 +56,13 @@
 	SUB     $1, nblocks     \
 	CBNZ    nblocks, loop   \
 
-// Store the primes in a contiguous array so we can load them with LDP.
-DATA primes<> +0(SB)/8, $11400714785074694791
-DATA primes<> +8(SB)/8, $14029467366897019727
-DATA primes<>+16(SB)/8, $1609587929392839161
-DATA primes<>+24(SB)/8, $9650029242287828579
-DATA primes<>+32(SB)/8, $2870177450012600261
-GLOBL primes<>(SB), NOPTR+RODATA, $40
-
 // func Sum64(b []byte) uint64
 TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
 	LDP b_base+0(FP), (p, n)
 
-	LDP  primes<> +0(SB), (prime1, prime2)
-	LDP  primes<>+16(SB), (prime3, prime4)
-	MOVD primes<>+32(SB), prime5
+	LDP  ·primes+8(SB), (prime1, prime2)
+	LDP  ·primes+24(SB), (prime3, prime4)
+	MOVD ·primes+40(SB), prime5
 
 	CMP  $32, n
 	CSEL LT, prime5, ZR, h // if n < 32 { h = prime5 } else { h = 0 }
@@ -167,7 +159,7 @@ end:
 
 // func writeBlocks(d *Digest, b []byte) int
 TEXT ·writeBlocks(SB), NOSPLIT|NOFRAME, $0-40
-	LDP primes<>(SB), (prime1, prime2)
+	LDP ·primes+8(SB), (prime1, prime2)
 
 	// Load state. Assume v[1-4] are stored contiguously.
 	MOVD d+0(FP), digest
