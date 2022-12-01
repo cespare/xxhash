@@ -28,22 +28,22 @@
 #define round(acc, x) \
 	MADD prime2, acc, x, acc \
 	ROR  $64-31, acc         \
-	MUL  prime1, acc         \
+	MUL  prime1, acc
 
 // round0 performs the operation x = round(0, x).
 #define round0(x) \
 	MUL prime2, x \
 	ROR $64-31, x \
-	MUL prime1, x \
+	MUL prime1, x
 
 #define mergeRound(acc, x) \
 	round0(x)                     \
 	EOR  x, acc                   \
-	MADD acc, prime4, prime1, acc \
+	MADD acc, prime4, prime1, acc
 
-// blocksLoop processes as many 32-byte blocks as possible,
-// updating v1, v2, v3, and v4. It assumes that v >= 32.
-#define blocksLoop() \
+// blockLoop processes as many 32-byte blocks as possible,
+// updating v1, v2, v3, and v4. It assumes that n >= 32.
+#define blockLoop() \
 	LSR     $5, n, nblocks  \
 	PCALIGN $16             \
 	loop:                   \
@@ -54,7 +54,7 @@
 	round(v3, x3)           \
 	round(v4, x4)           \
 	SUB     $1, nblocks     \
-	CBNZ    nblocks, loop   \
+	CBNZ    nblocks, loop
 
 // func Sum64(b []byte) uint64
 TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
@@ -73,7 +73,7 @@ TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
 	MOVD $0, v3
 	NEG  prime1, v4
 
-	blocksLoop()
+	blockLoop()
 
 	ROR $64-1, v1, x1
 	ROR $64-7, v2, x2
@@ -139,7 +139,7 @@ try2:
 	MUL prime1, h
 
 try1:
-	TBZ   $0, n, end
+	TBZ   $0, n, finalize
 	MOVBU (p), x4
 
 	MUL prime5, x4
@@ -147,7 +147,7 @@ try1:
 	ROR $64-11, h
 	MUL prime1, h
 
-end:
+finalize:
 	EOR h >> 33, h
 	MUL prime2, h
 	EOR h >> 29, h
@@ -168,7 +168,7 @@ TEXT ·writeBlocks(SB), NOSPLIT|NOFRAME, $0-40
 
 	LDP b_base+8(FP), (p, n)
 
-	blocksLoop()
+	blockLoop()
 
 	// Store updated state.
 	STP (v1, v2), 0(digest)
