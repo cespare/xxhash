@@ -95,13 +95,16 @@ afterLoop:
 	LDP.P 16(p), (x1, x2)
 
 	round0(x1)
-	EOR  x1, h
+	// NOTE: here and below, sequencing the EOR after the ROR (using a
+	// rotated register) is worth a small but measurable speedup for small
+	// inputs.
 	ROR  $64-27, h
+	EOR  x1 @> 64-27, h, h
 	MADD h, prime4, prime1, h
 
 	round0(x2)
-	EOR  x2, h
 	ROR  $64-27, h
+	EOR  x2 @> 64-27, h, h
 	MADD h, prime4, prime1, h
 
 try8:
@@ -109,8 +112,8 @@ try8:
 	MOVD.P 8(p), x1
 
 	round0(x1)
-	EOR  x1, h
 	ROR  $64-27, h
+	EOR  x1 @> 64-27, h, h
 	MADD h, prime4, prime1, h
 
 try4:
@@ -118,8 +121,8 @@ try4:
 	MOVWU.P 4(p), x2
 
 	MUL  prime1, x2
-	EOR  x2, h
 	ROR  $64-23, h
+	EOR  x2 @> 64-23, h, h
 	MADD h, prime3, prime2, h
 
 try2:
@@ -129,13 +132,13 @@ try2:
 	LSR     $8, x3, x2
 
 	MUL prime5, x1
-	EOR x1, h
 	ROR $64-11, h
+	EOR x1 @> 64-11, h, h
 	MUL prime1, h
 
 	MUL prime5, x2
-	EOR x2, h
 	ROR $64-11, h
+	EOR x2 @> 64-11, h, h
 	MUL prime1, h
 
 try1:
@@ -143,8 +146,8 @@ try1:
 	MOVBU (p), x4
 
 	MUL prime5, x4
-	EOR x4, h
 	ROR $64-11, h
+	EOR x4 @> 64-11, h, h
 	MUL prime1, h
 
 finalize:
