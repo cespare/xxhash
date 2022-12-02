@@ -20,7 +20,7 @@ const (
 //
 // The consts are used when possible in Go code to avoid MOVs but we need a
 // contiguous array of the assembly code.
-var primes = [...]uint64{0, prime1, prime2, prime3, prime4, prime5}
+var primes = [...]uint64{prime1, prime2, prime3, prime4, prime5}
 
 // Digest implements hash.Hash64.
 type Digest struct {
@@ -42,10 +42,10 @@ func New() *Digest {
 
 // Reset clears the Digest's state so that it can be reused.
 func (d *Digest) Reset() {
-	d.v1 = primes[1] + prime2
+	d.v1 = primes[0] + prime2
 	d.v2 = prime2
 	d.v3 = 0
-	d.v4 = -primes[1]
+	d.v4 = -primes[0]
 	d.total = 0
 	d.n = 0
 }

@@ -60,9 +60,9 @@
 TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
 	LDP b_base+0(FP), (p, n)
 
-	LDP  ·primes+8(SB), (prime1, prime2)
-	LDP  ·primes+24(SB), (prime3, prime4)
-	MOVD ·primes+40(SB), prime5
+	LDP  ·primes+0(SB), (prime1, prime2)
+	LDP  ·primes+16(SB), (prime3, prime4)
+	MOVD ·primes+32(SB), prime5
 
 	CMP  $32, n
 	CSEL LT, prime5, ZR, h // if n < 32 { h = prime5 } else { h = 0 }
@@ -162,7 +162,7 @@ finalize:
 
 // func writeBlocks(d *Digest, b []byte) int
 TEXT ·writeBlocks(SB), NOSPLIT|NOFRAME, $0-40
-	LDP ·primes+8(SB), (prime1, prime2)
+	LDP ·primes+0(SB), (prime1, prime2)
 
 	// Load state. Assume v[1-4] are stored contiguously.
 	MOVD d+0(FP), digest

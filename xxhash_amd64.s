@@ -71,7 +71,7 @@ loop:  \
 #define do1() \
 	MOVBQZX (p), tmp            \
 	ADDQ    $1, p               \
-	IMULQ   ·primes+40(SB), tmp \
+	IMULQ   ·primes+32(SB), tmp \
 	XORQ    tmp, h              \
 	ROLQ    $11, h              \
 	IMULQ   prime1, h           \
@@ -79,9 +79,9 @@ loop:  \
 // func Sum64(b []byte) uint64
 TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
 	// Load fixed primes.
-	MOVQ ·primes+8(SB), prime1
-	MOVQ ·primes+16(SB), prime2
-	MOVQ ·primes+32(SB), prime4
+	MOVQ ·primes+0(SB), prime1
+	MOVQ ·primes+8(SB), prime2
+	MOVQ ·primes+24(SB), prime4
 
 	// Load slice.
 	MOVQ b_base+0(FP), p
@@ -125,7 +125,7 @@ TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
 	JMP afterBlocks
 
 noBlocks:
-	MOVQ ·primes+40(SB), h
+	MOVQ ·primes+32(SB), h
 
 afterBlocks:
 	ADDQ n, h
@@ -156,7 +156,7 @@ try4:
 
 	ROLQ  $23, h
 	IMULQ prime2, h
-	ADDQ  ·primes+24(SB), h
+	ADDQ  ·primes+16(SB), h
 
 try2:
 	ADDQ $2, end
@@ -181,7 +181,7 @@ finalize:
 	MOVQ  h, tmp
 	SHRQ  $29, tmp
 	XORQ  tmp, h
-	IMULQ ·primes+24(SB), h
+	IMULQ ·primes+16(SB), h
 	MOVQ  h, tmp
 	SHRQ  $32, tmp
 	XORQ  tmp, h
@@ -195,8 +195,8 @@ finalize:
 // func writeBlocks(d *Digest, b []byte) int
 TEXT ·writeBlocks(SB), NOSPLIT|NOFRAME, $0-40
 	// Load fixed primes needed for round.
-	MOVQ ·primes+8(SB), prime1
-	MOVQ ·primes+16(SB), prime2
+	MOVQ ·primes+0(SB), prime1
+	MOVQ ·primes+8(SB), prime2
 
 	// Load slice.
 	MOVQ b_base+8(FP), p
