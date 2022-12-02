@@ -34,8 +34,6 @@ func TestInlining(t *testing.T) {
 		"(*Digest).WriteString": {},
 	}
 
-	// TODO: it would be better to use the go binary that is running
-	// 'go test' (if we are running under 'go test').
 	cmd := exec.Command("go", "test", "-gcflags=-m", "-run", "xxxx")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
