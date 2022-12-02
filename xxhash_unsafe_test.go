@@ -26,7 +26,7 @@ func TestStringAllocs(t *testing.T) {
 	})
 }
 
-// This test is inspired by the Go runtime tests in https://golang.org/cl/57410.
+// This test is inspired by the Go runtime tests in https://go.dev/cl/57410.
 // It asserts that certain important functions may be inlined.
 func TestInlining(t *testing.T) {
 	funcs := map[string]struct{}{
