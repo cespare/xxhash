@@ -95,6 +95,7 @@ afterLoop:
 	LDP.P 16(p), (x1, x2)
 
 	round0(x1)
+
 	// NOTE: here and below, sequencing the EOR after the ROR (using a
 	// rotated register) is worth a small but measurable speedup for small
 	// inputs.
