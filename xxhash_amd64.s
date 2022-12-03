@@ -11,12 +11,11 @@
 #define p      SI // pointer to advance through b
 #define n      DX
 #define end    BX // loop end
-#define k1     R8
 #define v1     R8
 #define v2     R9
 #define v3     R10
 #define v4     R11
-#define tmp    R12
+#define x      R12
 #define prime1 R13
 #define prime2 R14
 #define prime4 DI
@@ -46,16 +45,16 @@
 // to process.
 #define blockLoop() \
 loop:  \
-	MOVQ +0(p), tmp  \
-	round(v1, tmp)   \
-	MOVQ +8(p), tmp  \
-	round(v2, tmp)   \
-	MOVQ +16(p), tmp \
-	round(v3, tmp)   \
-	MOVQ +24(p), tmp \
-	round(v4, tmp)   \
-	ADDQ $32, p      \
-	CMPQ p, end      \
+	MOVQ +0(p), x  \
+	round(v1, x)   \
+	MOVQ +8(p), x  \
+	round(v2, x)   \
+	MOVQ +16(p), x \
+	round(v3, x)   \
+	MOVQ +24(p), x \
+	round(v4, x)   \
+	ADDQ $32, p    \
+	CMPQ p, end    \
 	JLE  loop
 
 // func Sum64(b []byte) uint64
@@ -89,15 +88,15 @@ TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
 
 	MOVQ v1, h
 	ROLQ $1, h
-	MOVQ v2, tmp
-	ROLQ $7, tmp
-	ADDQ tmp, h
-	MOVQ v3, tmp
-	ROLQ $12, tmp
-	ADDQ tmp, h
-	MOVQ v4, tmp
-	ROLQ $18, tmp
-	ADDQ tmp, h
+	MOVQ v2, x
+	ROLQ $7, x
+	ADDQ x, h
+	MOVQ v3, x
+	ROLQ $12, x
+	ADDQ x, h
+	MOVQ v4, x
+	ROLQ $18, x
+	ADDQ x, h
 
 	mergeRound(h, v1)
 	mergeRound(h, v2)
@@ -117,10 +116,10 @@ afterBlocks:
 	JG   try4
 
 loop8:
-	MOVQ  (p), k1
+	MOVQ  (p), x
 	ADDQ  $8, p
-	round0(k1)
-	XORQ  k1, h
+	round0(x)
+	XORQ  x, h
 	ROLQ  $27, h
 	IMULQ prime1, h
 	ADDQ  prime4, h
@@ -133,10 +132,10 @@ try4:
 	CMPQ p, end
 	JG   try1
 
-	MOVL  (p), k1
+	MOVL  (p), x
 	ADDQ  $4, p
-	IMULQ prime1, k1
-	XORQ  k1, h
+	IMULQ prime1, x
+	XORQ  x, h
 
 	ROLQ  $23, h
 	IMULQ prime2, h
@@ -148,10 +147,10 @@ try1:
 	JGE  finalize
 
 loop1:
-	MOVBQZX (p), x1
+	MOVBQZX (p), x
 	ADDQ    $1, p
-	IMULQ   ·primes+32(SB), x1
-	XORQ    x1, h
+	IMULQ   ·primes+32(SB), x
+	XORQ    x, h
 	ROLQ    $11, h
 	IMULQ   prime1, h
 
@@ -159,17 +158,17 @@ loop1:
 	JL   loop1
 
 finalize:
-	MOVQ  h, x1
-	SHRQ  $33, x1
-	XORQ  x1, h
+	MOVQ  h, x
+	SHRQ  $33, x
+	XORQ  x, h
 	IMULQ prime2, h
-	MOVQ  h, x1
-	SHRQ  $29, x1
-	XORQ  x1, h
+	MOVQ  h, x
+	SHRQ  $29, x
+	XORQ  x, h
 	IMULQ ·primes+16(SB), h
-	MOVQ  h, x1
-	SHRQ  $32, x1
-	XORQ  x1, h
+	MOVQ  h, x
+	SHRQ  $32, x
+	XORQ  x, h
 
 	MOVQ h, ret+24(FP)
 	RET
