@@ -7,6 +7,7 @@
 
 // Registers:
 #define h      AX
+#define d      AX
 #define p      SI // pointer to advance through b
 #define n      DX
 #define end    BX // loop end
@@ -144,37 +145,34 @@ try4:
 try1:
 	ADDQ $4, end
 	CMPQ p, end
-	JGE   finalize
+	JGE  finalize
 
 loop1:
-	MOVBQZX (p), tmp
+	MOVBQZX (p), x1
 	ADDQ    $1, p
-	IMULQ   ·primes+32(SB), tmp
-	XORQ    tmp, h
+	IMULQ   ·primes+32(SB), x1
+	XORQ    x1, h
 	ROLQ    $11, h
 	IMULQ   prime1, h
 
 	CMPQ p, end
-	JL loop1
+	JL   loop1
 
 finalize:
-	MOVQ  h, tmp
-	SHRQ  $33, tmp
-	XORQ  tmp, h
+	MOVQ  h, x1
+	SHRQ  $33, x1
+	XORQ  x1, h
 	IMULQ prime2, h
-	MOVQ  h, tmp
-	SHRQ  $29, tmp
-	XORQ  tmp, h
+	MOVQ  h, x1
+	SHRQ  $29, x1
+	XORQ  x1, h
 	IMULQ ·primes+16(SB), h
-	MOVQ  h, tmp
-	SHRQ  $32, tmp
-	XORQ  tmp, h
+	MOVQ  h, x1
+	SHRQ  $32, x1
+	XORQ  x1, h
 
 	MOVQ h, ret+24(FP)
 	RET
-
-// writeBlocks uses the same registers as above except that it uses h to store
-// the d pointer.
 
 // func writeBlocks(d *Digest, b []byte) int
 TEXT ·writeBlocks(SB), NOSPLIT|NOFRAME, $0-40
@@ -189,21 +187,21 @@ TEXT ·writeBlocks(SB), NOSPLIT|NOFRAME, $0-40
 	SUBQ $32, end
 
 	// Load vN from d.
-	MOVQ d+0(FP), h
-	MOVQ 0(h), v1
-	MOVQ 8(h), v2
-	MOVQ 16(h), v3
-	MOVQ 24(h), v4
+	MOVQ s+0(FP), d
+	MOVQ 0(d), v1
+	MOVQ 8(d), v2
+	MOVQ 16(d), v3
+	MOVQ 24(d), v4
 
 	// We don't need to check the loop condition here; this function is
 	// always called with at least one block of data to process.
 	blockLoop()
 
 	// Copy vN back to d.
-	MOVQ v1, 0(h)
-	MOVQ v2, 8(h)
-	MOVQ v3, 16(h)
-	MOVQ v4, 24(h)
+	MOVQ v1, 0(d)
+	MOVQ v2, 8(d)
+	MOVQ v3, 16(d)
+	MOVQ v4, 24(d)
 
 	// The number of bytes written is p minus the old base pointer.
 	SUBQ b_base+8(FP), p
