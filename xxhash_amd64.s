@@ -57,25 +57,6 @@ loop:  \
 	CMPQ p, end      \
 	JLE  loop
 
-// do8 processes an 8-byte chunk and advances p.
-#define do8() \
-	MOVQ  (p), k1   \
-	ADDQ  $8, p     \
-	round0(k1)      \
-	XORQ  k1, h     \
-	ROLQ  $27, h    \
-	IMULQ prime1, h \
-	ADDQ  prime4, h
-
-// do1 processes a single byte and advances p.
-#define do1() \
-	MOVBQZX (p), tmp            \
-	ADDQ    $1, p               \
-	IMULQ   ·primes+32(SB), tmp \
-	XORQ    tmp, h              \
-	ROLQ    $11, h              \
-	IMULQ   prime1, h           \
-
 // func Sum64(b []byte) uint64
 TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
 	// Load fixed primes.
@@ -130,24 +111,26 @@ noBlocks:
 afterBlocks:
 	ADDQ n, h
 
-	ADDQ $16, end
-	CMPQ p, end
-	JG   try8
-
-	do8()
-	do8()
-
-try8:
-	ADDQ $8, end
+	ADDQ $24, end
 	CMPQ p, end
 	JG   try4
 
-	do8()
+loop8:
+	MOVQ  (p), k1
+	ADDQ  $8, p
+	round0(k1)
+	XORQ  k1, h
+	ROLQ  $27, h
+	IMULQ prime1, h
+	ADDQ  prime4, h
+
+	CMPQ p, end
+	JLE  loop8
 
 try4:
 	ADDQ $4, end
 	CMPQ p, end
-	JG   try2
+	JG   try1
 
 	MOVL  (p), k1
 	ADDQ  $4, p
@@ -158,20 +141,21 @@ try4:
 	IMULQ prime2, h
 	ADDQ  ·primes+16(SB), h
 
-try2:
-	ADDQ $2, end
-	CMPQ p, end
-	JG   try1
-
-	do1()
-	do1()
-
 try1:
-	ADDQ $1, end
+	ADDQ $4, end
 	CMPQ p, end
-	JG   finalize
+	JGE   finalize
 
-	do1()
+loop1:
+	MOVBQZX (p), tmp
+	ADDQ    $1, p
+	IMULQ   ·primes+32(SB), tmp
+	XORQ    tmp, h
+	ROLQ    $11, h
+	IMULQ   prime1, h
+
+	CMPQ p, end
+	JL loop1
 
 finalize:
 	MOVQ  h, tmp
