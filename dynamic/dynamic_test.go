@@ -6,6 +6,7 @@ package main
 import (
 	"bytes"
 	"log"
+	"os"
 	"os/exec"
 	"plugin"
 	"testing"
@@ -26,7 +27,7 @@ func TestMain(m *testing.M) {
 	if err := cmd.Run(); err != nil {
 		log.Fatalf("Error building plugin: %s\nOutput:\n%s", err, out.String())
 	}
-	m.Run()
+	os.Exit(m.Run())
 }
 
 func TestDynamic(t *testing.T) {
