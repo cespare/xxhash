@@ -1,3 +1,4 @@
+
 # xxhash
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/cespare/xxhash/v2.svg)](https://pkg.go.dev/github.com/cespare/xxhash/v2)
@@ -29,6 +30,29 @@ assembly implementations for amd64 and arm64. If desired, the `purego` build tag
 opts into using the Go code even on those architectures.
 
 [xxHash]: http://cyan4973.github.io/xxHash/
+
+## Examples
+
+To hash only one slice of bytes you can use the simplified API:
+```go
+wholeSliceOfBytes := []byte("Some text to hash")
+digestValue := xxhash.Sum64(wholeSliceOfBytes)
+```
+
+In the case of needing to combine several chunks into one hash use the following API:
+```go
+// 1. Create xxhash object
+hasher := xxhash.New()
+
+// 2. Feed it data by calling the Write function
+// Note, for convenience there is also a WriteString()
+byteChunk := []byte("Some text to hash")
+hasher.Write(byteChunk)
+
+// 3. Sum up all the hashes and output the digest
+digestValue := hasher.Sum64()
+```
+
 
 ## Compatibility
 
@@ -70,3 +94,4 @@ benchstat <(go test -benchtime 500ms -count 15 -bench 'Sum64$')
 - [VictoriaMetrics](https://github.com/VictoriaMetrics/VictoriaMetrics)
 - [FreeCache](https://github.com/coocood/freecache)
 - [FastCache](https://github.com/VictoriaMetrics/fastcache)
+
