@@ -19,7 +19,37 @@ func Sum64(b []byte) uint64 {
 		v2 := prime2
 		v3 := uint64(0)
 		v4 := -primes[0]
-		for len(b) >= 32 {
+		for len(b) >= 128 {
+			v1 = round(v1, u64(b[0:8:len(b)]))
+			v2 = round(v2, u64(b[8:16:len(b)]))
+			v3 = round(v3, u64(b[16:24:len(b)]))
+			v4 = round(v4, u64(b[24:32:len(b)]))
+			v1 = round(v1, u64(b[32:40:len(b)]))
+			v2 = round(v2, u64(b[40:48:len(b)]))
+			v3 = round(v3, u64(b[48:56:len(b)]))
+			v4 = round(v4, u64(b[56:64:len(b)]))
+			v1 = round(v1, u64(b[64:72:len(b)]))
+			v2 = round(v2, u64(b[72:80:len(b)]))
+			v3 = round(v3, u64(b[80:88:len(b)]))
+			v4 = round(v4, u64(b[88:96:len(b)]))
+			v1 = round(v1, u64(b[96:104:len(b)]))
+			v2 = round(v2, u64(b[104:112:len(b)]))
+			v3 = round(v3, u64(b[112:120:len(b)]))
+			v4 = round(v4, u64(b[120:128:len(b)]))
+			b = b[128:len(b):len(b)]
+		}
+		if len(b) >= 64 {
+			v1 = round(v1, u64(b[0:8:len(b)]))
+			v2 = round(v2, u64(b[8:16:len(b)]))
+			v3 = round(v3, u64(b[16:24:len(b)]))
+			v4 = round(v4, u64(b[24:32:len(b)]))
+			v1 = round(v1, u64(b[32:40:len(b)]))
+			v2 = round(v2, u64(b[40:48:len(b)]))
+			v3 = round(v3, u64(b[48:56:len(b)]))
+			v4 = round(v4, u64(b[56:64:len(b)]))
+			b = b[64:len(b):len(b)]
+		}
+		if len(b) >= 32 {
 			v1 = round(v1, u64(b[0:8:len(b)]))
 			v2 = round(v2, u64(b[8:16:len(b)]))
 			v3 = round(v3, u64(b[16:24:len(b)]))
@@ -64,7 +94,37 @@ func Sum64(b []byte) uint64 {
 func writeBlocks(d *Digest, b []byte) int {
 	v1, v2, v3, v4 := d.v1, d.v2, d.v3, d.v4
 	n := len(b)
-	for len(b) >= 32 {
+	for len(b) >= 128 {
+		v1 = round(v1, u64(b[0:8:len(b)]))
+		v2 = round(v2, u64(b[8:16:len(b)]))
+		v3 = round(v3, u64(b[16:24:len(b)]))
+		v4 = round(v4, u64(b[24:32:len(b)]))
+		v1 = round(v1, u64(b[32:40:len(b)]))
+		v2 = round(v2, u64(b[40:48:len(b)]))
+		v3 = round(v3, u64(b[48:56:len(b)]))
+		v4 = round(v4, u64(b[56:64:len(b)]))
+		v1 = round(v1, u64(b[64:72:len(b)]))
+		v2 = round(v2, u64(b[72:80:len(b)]))
+		v3 = round(v3, u64(b[80:88:len(b)]))
+		v4 = round(v4, u64(b[88:96:len(b)]))
+		v1 = round(v1, u64(b[96:104:len(b)]))
+		v2 = round(v2, u64(b[104:112:len(b)]))
+		v3 = round(v3, u64(b[112:120:len(b)]))
+		v4 = round(v4, u64(b[120:128:len(b)]))
+		b = b[128:len(b):len(b)]
+	}
+	if len(b) >= 64 {
+		v1 = round(v1, u64(b[0:8:len(b)]))
+		v2 = round(v2, u64(b[8:16:len(b)]))
+		v3 = round(v3, u64(b[16:24:len(b)]))
+		v4 = round(v4, u64(b[24:32:len(b)]))
+		v1 = round(v1, u64(b[32:40:len(b)]))
+		v2 = round(v2, u64(b[40:48:len(b)]))
+		v3 = round(v3, u64(b[48:56:len(b)]))
+		v4 = round(v4, u64(b[56:64:len(b)]))
+		b = b[64:len(b):len(b)]
+	}
+	if len(b) >= 32 {
 		v1 = round(v1, u64(b[0:8:len(b)]))
 		v2 = round(v2, u64(b[8:16:len(b)]))
 		v3 = round(v3, u64(b[16:24:len(b)]))
