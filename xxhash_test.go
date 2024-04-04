@@ -4,45 +4,60 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 )
 
 func TestAll(t *testing.T) {
+	// Exactly 63 characters, which exercises all code paths.
+	const s63 = "Call me Ishmael. Some years ago--never mind how long precisely-"
 	for _, tt := range []struct {
-		name  string
 		input string
+		seed  uint64
 		want  uint64
 	}{
-		{"empty", "", 0xef46db3751d8e999},
-		{"a", "a", 0xd24ec4f1a98c6e5b},
-		{"as", "as", 0x1c330fb2d66be179},
-		{"asd", "asd", 0x631c37ce72a97393},
-		{"asdf", "asdf", 0x415872f599cea71e},
-		{
-			"len=63",
-			// Exactly 63 characters, which exercises all code paths.
-			"Call me Ishmael. Some years ago--never mind how long precisely-",
-			0x02a2e85470d6fd96,
-		},
+		{"", 0, 0xef46db3751d8e999},
+		{"a", 0, 0xd24ec4f1a98c6e5b},
+		{"as", 0, 0x1c330fb2d66be179},
+		{"asd", 0, 0x631c37ce72a97393},
+		{"asdf", 0, 0x415872f599cea71e},
+		{s63, 0, 0x02a2e85470d6fd96},
+
+		{"", 123, 0xe0db84de91f3e198},
+		{"asdf", math.MaxUint64, 0x9a2fd8473be539b6},
+		{s63, 54321, 0x1736d186daf5d1cd},
 	} {
 		lastChunkSize := len(tt.input)
 		if lastChunkSize == 0 {
 			lastChunkSize = 1
 		}
+		var name string
+		if tt.input == "" {
+			name = "input=empty"
+		} else if len(tt.input) > 10 {
+			name = fmt.Sprintf("input=len-%d", len(tt.input))
+		} else {
+			name = fmt.Sprintf("input=%q", tt.input)
+		}
+		if tt.seed != 0 {
+			name += fmt.Sprintf(",seed=%d", tt.seed)
+		}
 		for chunkSize := 1; chunkSize <= lastChunkSize; chunkSize++ {
-			name := fmt.Sprintf("%s,chunkSize=%d", tt.name, chunkSize)
+			name := fmt.Sprintf("%s,chunkSize=%d", name, chunkSize)
 			t.Run(name, func(t *testing.T) {
-				testDigest(t, tt.input, chunkSize, tt.want)
+				testDigest(t, tt.input, tt.seed, chunkSize, tt.want)
 			})
 		}
-		t.Run(tt.name, func(t *testing.T) { testSum(t, tt.input, tt.want) })
+		if tt.seed == 0 {
+			t.Run(name, func(t *testing.T) { testSum(t, tt.input, tt.want) })
+		}
 	}
 }
 
-func testDigest(t *testing.T, input string, chunkSize int, want uint64) {
-	d := New()
-	ds := New() // uses WriteString
+func testDigest(t *testing.T, input string, seed uint64, chunkSize int, want uint64) {
+	d := NewWithSeed(seed)
+	ds := NewWithSeed(seed) // uses WriteString
 	for i := 0; i < len(input); i += chunkSize {
 		chunk := input[i:]
 		if len(chunk) > chunkSize {
@@ -88,6 +103,23 @@ func TestReset(t *testing.T) {
 	h0 := d.Sum64()
 
 	d.Reset()
+	d.Write([]byte(strings.Join(parts, "")))
+	h1 := d.Sum64()
+
+	if h0 != h1 {
+		t.Errorf("0x%x != 0x%x", h0, h1)
+	}
+}
+
+func TestResetWithSeed(t *testing.T) {
+	parts := []string{"The quic", "k br", "o", "wn fox jumps", " ov", "er the lazy ", "dog."}
+	d := NewWithSeed(123)
+	for _, part := range parts {
+		d.Write([]byte(part))
+	}
+	h0 := d.Sum64()
+
+	d.ResetWithSeed(123)
 	d.Write([]byte(strings.Join(parts, "")))
 	h1 := d.Sum64()
 
