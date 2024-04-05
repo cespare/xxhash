@@ -3,8 +3,7 @@
 
 package xxhash
 
-// Sum64 computes the 64-bit xxHash digest of b with a zero seed.
-func Sum64(b []byte) uint64 {
+func Sum64WithSeed(b []byte, seed uint64) uint64 {
 	// A simpler version would be
 	//   d := New()
 	//   d.Write(b)
@@ -15,10 +14,10 @@ func Sum64(b []byte) uint64 {
 	var h uint64
 
 	if n >= 32 {
-		v1 := primes[0] + prime2
-		v2 := prime2
-		v3 := uint64(0)
-		v4 := -primes[0]
+		v1 := seed + prime1 + prime2
+		v2 := seed + prime2
+		v3 := seed
+		v4 := seed - prime1
 		for len(b) >= 32 {
 			v1 = round(v1, u64(b[0:8:len(b)]))
 			v2 = round(v2, u64(b[8:16:len(b)]))
@@ -32,7 +31,7 @@ func Sum64(b []byte) uint64 {
 		h = mergeRound(h, v3)
 		h = mergeRound(h, v4)
 	} else {
-		h = prime5
+		h = seed + prime5
 	}
 
 	h += uint64(n)

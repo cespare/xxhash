@@ -8,6 +8,11 @@ import (
 	"math/bits"
 )
 
+// Sum64 computes the 64-bit xxHash digest of b with a zero seed.
+func Sum64(b []byte) uint64 {
+	return Sum64WithSeed(b, 0)
+}
+
 const (
 	prime1 uint64 = 11400714785074694791
 	prime2 uint64 = 14029467366897019727

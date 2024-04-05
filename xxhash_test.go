@@ -49,9 +49,7 @@ func TestAll(t *testing.T) {
 				testDigest(t, tt.input, tt.seed, chunkSize, tt.want)
 			})
 		}
-		if tt.seed == 0 {
-			t.Run(name, func(t *testing.T) { testSum(t, tt.input, tt.want) })
-		}
+		t.Run(name, func(t *testing.T) { testSum(t, tt.input, tt.seed, tt.want) })
 	}
 }
 
@@ -85,11 +83,11 @@ func testDigest(t *testing.T, input string, seed uint64, chunkSize int, want uin
 	}
 }
 
-func testSum(t *testing.T, input string, want uint64) {
-	if got := Sum64([]byte(input)); got != want {
+func testSum(t *testing.T, input string, seed uint64, want uint64) {
+	if got := Sum64WithSeed([]byte(input), seed); got != want {
 		t.Fatalf("Sum64: got 0x%x; want 0x%x", got, want)
 	}
-	if got := Sum64String(input); got != want {
+	if got := Sum64StringWithSeed(input, seed); got != want {
 		t.Fatalf("Sum64String: got 0x%x; want 0x%x", got, want)
 	}
 }

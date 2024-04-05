@@ -57,8 +57,8 @@ loop:  \
 	CMPQ p, end    \
 	JLE  loop
 
-// func Sum64(b []byte) uint64
-TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
+// func Sum64WithSeed(b []byte, seed uint64) uint64
+TEXT ·Sum64WithSeed(SB), NOSPLIT|NOFRAME, $0-32
 	// Load fixed primes.
 	MOVQ ·primes+0(SB), prime1
 	MOVQ ·primes+8(SB), prime2
@@ -67,6 +67,8 @@ TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
 	// Load slice.
 	MOVQ b_base+0(FP), p
 	MOVQ b_len+8(FP), n
+	// Use h to store the seed initially.
+	MOVQ seed+24(FP), h
 	LEAQ (p)(n*1), end
 
 	// The first loop limit will be len(b)-32.
@@ -77,11 +79,13 @@ TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
 	JLT  noBlocks
 
 	// Set up initial state (v1, v2, v3, v4).
-	MOVQ prime1, v1
+	MOVQ h, v1
+	MOVQ h, v2
+	MOVQ h, v3
+	MOVQ h, v4
+	ADDQ prime1, v1
 	ADDQ prime2, v1
-	MOVQ prime2, v2
-	XORQ v3, v3
-	XORQ v4, v4
+	ADDQ prime2, v2
 	SUBQ prime1, v4
 
 	blockLoop()
@@ -106,7 +110,7 @@ TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
 	JMP afterBlocks
 
 noBlocks:
-	MOVQ ·primes+32(SB), h
+	ADDQ ·primes+32(SB), h
 
 afterBlocks:
 	ADDQ n, h
@@ -170,7 +174,7 @@ finalize:
 	SHRQ  $32, x
 	XORQ  x, h
 
-	MOVQ h, ret+24(FP)
+	MOVQ h, ret+32(FP)
 	RET
 
 // func writeBlocks(d *Digest, b []byte) int
