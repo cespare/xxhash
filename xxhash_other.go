@@ -63,16 +63,26 @@ func Sum64(b []byte) uint64 {
 	return h
 }
 
-func writeBlocks(d *Digest, b []byte) int {
+func writeBlocks(d *Digest, extra *[32]byte, b []byte) {
 	v1, v2, v3, v4 := d.s[0], d.s[1], d.s[2], d.s[3]
-	n := len(b)
-	for len(b) >= 32 {
-		v1 = round(v1, u64(b[0:8:len(b)]))
-		v2 = round(v2, u64(b[8:16:len(b)]))
-		v3 = round(v3, u64(b[16:24:len(b)]))
-		v4 = round(v4, u64(b[24:32:len(b)]))
-		b = b[32:len(b):len(b)]
+	var s []byte
+	if extra != nil {
+		s = extra[:]
+	} else {
+		s = b
+	}
+	for len(s) >= 32 {
+		for len(s) >= 32 {
+			v1 = round(v1, u64(s[0:8:len(s)]))
+			v2 = round(v2, u64(s[8:16:len(s)]))
+			v3 = round(v3, u64(s[16:24:len(s)]))
+			v4 = round(v4, u64(s[24:32:len(s)]))
+			s = s[32:len(s):len(s)]
+		}
+		if extra != nil {
+			s = b
+			extra = nil
+		}
 	}
 	d.s[0], d.s[1], d.s[2], d.s[3] = v1, v2, v3, v4
-	return n - len(b)
 }

@@ -30,7 +30,7 @@ type Digest struct {
 	s     [4]uint64
 	total uint64
 	mem   [32]byte
-	n     int // how much of mem is used
+	n     uint8 // how much of mem is used
 }
 
 // New creates a new Digest with a zero seed.
@@ -73,35 +73,32 @@ func (d *Digest) Write(b []byte) (n int, err error) {
 	n = len(b)
 	d.total += uint64(n)
 
-	memleft := d.mem[d.n&(len(d.mem)-1):]
-
-	if d.n+n < 32 {
-		// This new data doesn't even fill the current block.
-		copy(memleft, b)
-		d.n += n
-		return
-	}
-
-	if d.n > 0 {
-		// Finish off the partial block.
-		c := copy(memleft, b)
-		d.s[0] = round(d.s[0], u64(d.mem[0:8]))
-		d.s[1] = round(d.s[1], u64(d.mem[8:16]))
-		d.s[2] = round(d.s[2], u64(d.mem[16:24]))
-		d.s[3] = round(d.s[3], u64(d.mem[24:32]))
-		b = b[c:]
+	var extra *[32]byte
+	if d.n != 0 {
+		// there is data already in mem, append to it.
+		added := copy(d.mem[d.n:], b)
+		b = b[added:]
+		d.n += uint8(added)
+		if uint(d.n) < uint(len(d.mem)) {
+			// not enough data to hash.
+			return
+		}
+		extra = &d.mem
 		d.n = 0
 	}
 
 	if len(b) >= 32 {
 		// One or more full blocks left.
-		nw := writeBlocks(d, b)
-		b = b[nw:]
+		writeBlocks(d, extra, b)
+		b = b[uint(len(b))&^31:]
+	} else if extra != nil {
+		// we don't have enough data to fill b but we have an extra.
+		// write blocks must never be called with len(b) < 32 so pass extra as b.
+		writeBlocks(d, nil, extra[:])
 	}
 
 	// Store any remaining partial block.
-	copy(d.mem[:], b)
-	d.n = len(b)
+	d.n = uint8(copy(d.mem[:], b))
 
 	return
 }
@@ -139,7 +136,7 @@ func (d *Digest) Sum64() uint64 {
 
 	h += d.total
 
-	b := d.mem[:d.n&(len(d.mem)-1)]
+	b := d.mem[:d.n&uint8(len(d.mem)-1)]
 	for ; len(b) >= 8; b = b[8:] {
 		k1 := round(0, u64(b[:8]))
 		h ^= k1
@@ -179,7 +176,7 @@ func (d *Digest) MarshalBinary() ([]byte, error) {
 	b = appendUint64(b, d.s[3])
 	b = appendUint64(b, d.total)
 	b = append(b, d.mem[:d.n]...)
-	b = b[:len(b)+len(d.mem)-d.n]
+	b = b[:len(b)+len(d.mem)-int(d.n)]
 	return b, nil
 }
 
@@ -198,7 +195,7 @@ func (d *Digest) UnmarshalBinary(b []byte) error {
 	b, d.s[3] = consumeUint64(b)
 	b, d.total = consumeUint64(b)
 	copy(d.mem[:], b)
-	d.n = int(d.total % uint64(len(d.mem)))
+	d.n = uint8(d.total % uint64(len(d.mem)))
 	return nil
 }
 

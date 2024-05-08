@@ -12,26 +12,28 @@ var useAvx512 = cpuid.CPU.Supports(cpuid.AVX, cpuid.AVX2, cpuid.AVX512DQ, cpuid.
 // Sum64 computes the 64-bit xxHash digest of b with a zero seed.
 func Sum64(b []byte) uint64 {
 	if useAvx512 {
-		return sum64avx512(b)
+		return sum64Avx512(b)
 	}
-	return sum64scallar(b)
+	return sum64Scalar(b)
 }
 
 //go:noescape
-func sum64scallar(b []byte) uint64
+func sum64Scalar(b []byte) uint64
 
 //go:noescape
-func sum64avx512(b []byte) uint64
+func sum64Avx512(b []byte) uint64
 
-func writeBlocks(d *Digest, b []byte) int {
+// extra is a first block before b, it may be nil then skip it.
+func writeBlocks(d *Digest, extra *[32]byte, b []byte) {
 	if useAvx512 {
-		return writeBlocksAvx512(&d.s, b)
+		writeBlocksAvx512(&d.s, extra, b)
+		return
 	}
-	return writeBlocksScallar(d, b)
+	writeBlocksScalar(d, nil, b)
 }
 
 //go:noescape
-func writeBlocksAvx512(d *[4]uint64, b []byte) int
+func writeBlocksAvx512(d *[4]uint64, extra *[32]byte, b []byte)
 
 //go:noescape
-func writeBlocksScallar(d *Digest, b []byte) int
+func writeBlocksScalar(d *Digest, extra *[32]byte, b []byte)

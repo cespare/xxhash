@@ -40,11 +40,8 @@
 	IMULQ prime1, acc \
 	ADDQ  prime4, acc
 
-// blockLoop processes as many 32-byte blocks as possible,
-// updating v1, v2, v3, and v4. It assumes that there is at least one block
-// to process.
-#define blockLoop() \
-loop:  \
+// round32 perform a 32byte round loading from ptr on v1, v2, v3, v4.
+#define round32() \
 	MOVQ +0(p), x  \
 	round(v1, x)   \
 	MOVQ +8(p), x  \
@@ -52,13 +49,20 @@ loop:  \
 	MOVQ +16(p), x \
 	round(v3, x)   \
 	MOVQ +24(p), x \
-	round(v4, x)   \
-	ADDQ $32, p    \
-	CMPQ p, end    \
+	round(v4, x)
+
+// blockLoop processes as many 32-byte blocks as possible,
+// updating v1, v2, v3, and v4. It assumes that there is at least one block
+// to process.
+#define blockLoop() \
+loop:  \
+	round32()   \
+	ADDQ $32, p \
+	CMPQ p, end \
 	JLE  loop
 
 // func sum64(b []byte) uint64
-TEXT ·sum64scallar(SB), NOSPLIT|NOFRAME, $0-32
+TEXT ·sum64Scalar(SB), NOSPLIT|NOFRAME, $0-32
 	// Load fixed primes.
 	MOVQ ·primes+0(SB), prime1
 	MOVQ ·primes+8(SB), prime2
@@ -173,17 +177,11 @@ finalize:
 	MOVQ h, ret+24(FP)
 	RET
 
-// func writeBlocksScallar(d *Digest, b []byte) int
-TEXT ·writeBlocksScallar(SB), NOSPLIT|NOFRAME, $0-40
+// func writeBlocksScalar(d *Digest, extra *[32]byte, b []byte)
+TEXT ·writeBlocksScalar(SB), NOSPLIT|NOFRAME, $0-40
 	// Load fixed primes needed for round.
 	MOVQ ·primes+0(SB), prime1
 	MOVQ ·primes+8(SB), prime2
-
-	// Load slice.
-	MOVQ b_base+8(FP), p
-	MOVQ b_len+16(FP), n
-	LEAQ (p)(n*1), end
-	SUBQ $32, end
 
 	// Load vN from d.
 	MOVQ s+0(FP), d
@@ -191,6 +189,19 @@ TEXT ·writeBlocksScallar(SB), NOSPLIT|NOFRAME, $0-40
 	MOVQ 8(d), v2
 	MOVQ 16(d), v3
 	MOVQ 24(d), v4
+
+	// Handle extra
+	MOVQ extra+8(FP), p
+	TESTQ p, p
+	JZ	noExtra
+		round32()
+noExtra:
+
+	// Load slice.
+	MOVQ b_base+16(FP), p
+	MOVQ b_len+24(FP), n
+	LEAQ (p)(n*1), end
+	SUBQ $32, end
 
 	// We don't need to check the loop condition here; this function is
 	// always called with at least one block of data to process.
@@ -201,9 +212,5 @@ TEXT ·writeBlocksScallar(SB), NOSPLIT|NOFRAME, $0-40
 	MOVQ v2, 8(d)
 	MOVQ v3, 16(d)
 	MOVQ v4, 24(d)
-
-	// The number of bytes written is p minus the old base pointer.
-	SUBQ b_base+8(FP), p
-	MOVQ p, ret+32(FP)
 
 	RET

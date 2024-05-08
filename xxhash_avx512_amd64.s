@@ -8,9 +8,9 @@ DATA ·initWideAvx512<>+16(SB)/8, $0x0000000000000000
 DATA ·initWideAvx512<>+24(SB)/8, $0x61c8864e7a143579
 GLOBL ·initWideAvx512<>(SB), NOSPLIT|NOPTR, $32
 
-// func sum64avx512(b []byte) uint64
+// func sum64Avx512(b []byte) uint64
 // Requires: AVX, AVX2, AVX512DQ, AVX512F, AVX512VL, BMI
-TEXT ·sum64avx512(SB), NOSPLIT|NOFRAME, $0-32
+TEXT ·sum64Avx512(SB), NOSPLIT|NOFRAME, $0-32
 	MOVQ         b_base+0(FP), AX
 	MOVQ         b_len+8(FP), CX
 	MOVQ         $0x9e3779b185ebca87, DX
@@ -28,19 +28,19 @@ TEXT ·sum64avx512(SB), NOSPLIT|NOFRAME, $0-32
 	CMPQ         CX, $0x1f
 	JBE          loop_8
 	VMOVDQU      ·initWideAvx512<>+0(SB), Y0
+	VPBROADCASTQ DX, Y1
+	VPBROADCASTQ BX, Y2
 	MOVL         $0x0000001f, R9
 	ANDNQ        CX, R9, R9
 	ADDQ         AX, R9
-	VPBROADCASTQ DX, Y1
-	VPBROADCASTQ BX, Y2
 
 loop_32:
 	VMOVDQU      (AX), Y3
-	ADDQ         $0x20, AX
 	VPMULLQ      Y3, Y2, Y3
 	VPADDQ       Y3, Y0, Y0
 	VPROLQ       $0x1f, Y0, Y0
 	VPMULLQ      Y0, Y1, Y0
+	ADDQ         $0x20, AX
 	CMPQ         AX, R9
 	JNE          loop_32
 	VMOVQ        X0, R10
@@ -151,32 +151,40 @@ zero:
 	MOVQ R9, ret+24(FP)
 	RET
 
-// func writeBlocksAvx512(d *[4]uint64, b []byte) int
+// func writeBlocksAvx512(d *[4]uint64, extra *[32]byte, b []byte)
 // Requires: AVX, AVX2, AVX512DQ, AVX512F, AVX512VL, BMI
 TEXT ·writeBlocksAvx512(SB), NOSPLIT|NOFRAME, $0-40
 	MOVQ         d+0(FP), AX
-	MOVQ         b_base+8(FP), CX
-	MOVQ         b_len+16(FP), DX
+	MOVQ         extra+8(FP), CX
+	MOVQ         b_base+16(FP), DX
+	MOVQ         b_len+24(FP), BX
 	VMOVDQU      (AX), Y0
-	MOVQ         $0x9e3779b185ebca87, BX
+	MOVQ         $0x9e3779b185ebca87, SI
+	VPBROADCASTQ SI, Y1
 	MOVQ         $0xc2b2ae3d27d4eb4f, SI
-	MOVL         $0x0000001f, DI
-	ANDNQ        DX, DI, DI
-	MOVQ         DI, DX
-	ADDQ         CX, DI
-	VPBROADCASTQ BX, Y1
 	VPBROADCASTQ SI, Y2
+	TESTQ        CX, CX
+	JZ           skip_extra
+	VMOVDQU      (CX), Y3
+	VPMULLQ      Y3, Y2, Y3
+	VPADDQ       Y3, Y0, Y0
+	VPROLQ       $0x1f, Y0, Y0
+	VPMULLQ      Y0, Y1, Y0
+
+skip_extra:
+	MOVL  $0x0000001f, CX
+	ANDNQ BX, CX, CX
+	ADDQ  DX, CX
 
 loop_32:
-	VMOVDQU (CX), Y3
-	ADDQ    $0x20, CX
+	VMOVDQU (DX), Y3
 	VPMULLQ Y3, Y2, Y3
 	VPADDQ  Y3, Y0, Y0
 	VPROLQ  $0x1f, Y0, Y0
 	VPMULLQ Y0, Y1, Y0
-	CMPQ    CX, DI
+	ADDQ    $0x20, DX
+	CMPQ    DX, CX
 	JNE     loop_32
 	VMOVDQU Y0, (AX)
 	VZEROUPPER
-	MOVQ    DX, ret+32(FP)
 	RET

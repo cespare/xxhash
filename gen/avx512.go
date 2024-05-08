@@ -28,32 +28,29 @@ func mergeRound(h /*inout*/, v /*in-destroy*/, p1, p2, p4 reg.GPVirtual) {
 	ADDQ(p4, h)
 }
 
+func round(state /*inout*/, p, yprime1, yprime2 reg.Register) {
+	temp := YMM()
+	VMOVDQU(Mem{Base: p}, temp)
+	VPMULLQ(temp, yprime2, temp)
+	VPADDQ(temp, state, state)
+	VPROLQ(Imm(31), state, state)
+	VPMULLQ(state, yprime1, state)
+}
+
 // blockLoop handles 32 bytes at a time in one YMM register.
+// it assume n is 32 bytes or more.
 // state represent v1, v2, v3, v4 as 4 × uint64.
-func blockLoop(state /*inout*/, p /*inout*/, n, p1, p2, processed /*out-optional*/ reg.Register) {
+func blockLoop(state /*inout*/, p /*inout*/, n, yprime1, yprime2 reg.Register) {
 	endp := GP64()
 	MOVL(U32(31), endp.As32())
 	ANDNQ(n, endp, endp)
-	if processed != nil {
-		MOVQ(endp, processed)
-	}
 	ADDQ(p, endp)
-
-	yprime1 := YMM()
-	VPBROADCASTQ(p1, yprime1)
-	yprime2 := YMM()
-	VPBROADCASTQ(p2, yprime2)
 
 	Label("loop_32")
 	{
 		// main block loop
-		temp := YMM()
-		VMOVDQU(Mem{Base: p}, temp)
+		round(state, p, yprime1, yprime2)
 		ADDQ(Imm(32), p)
-		VPMULLQ(temp, yprime2, temp)
-		VPADDQ(temp, state, state)
-		VPROLQ(Imm(31), state, state)
-		VPMULLQ(state, yprime1, state)
 
 		CMPQ(p, endp)
 		JNE(LabelRef("loop_32"))
@@ -68,7 +65,7 @@ func sum64() {
 	DATA(16, U64(0))
 	DATA(24, U64(-prime1))
 
-	TEXT("sum64avx512", NOSPLIT|NOFRAME, "func(b []byte) uint64")
+	TEXT("sum64Avx512", NOSPLIT|NOFRAME, "func(b []byte) uint64")
 	p := Load(Param("b").Base(), GP64())
 	n := Load(Param("b").Len(), GP64())
 
@@ -95,7 +92,11 @@ func sum64() {
 		state := YMM()
 		VMOVDQU(initStateAvx512, state)
 
-		blockLoop(state, p, n, p1, p2, nil)
+		yprime1, yprime2 := YMM(), YMM()
+		VPBROADCASTQ(p1, yprime1)
+		VPBROADCASTQ(p2, yprime2)
+
+		blockLoop(state, p, n, yprime1, yprime2)
 
 		// This interleave two things: extracting v1,2,3,4 from state and computing h.
 		v1, v2, v3, v4, temp := GP64(), GP64(), GP64(), GP64(), GP64()
@@ -212,24 +213,31 @@ func sum64() {
 }
 
 func writeBlocks() {
-	TEXT("writeBlocksAvx512", NOSPLIT|NOFRAME, "func(d *[4]uint64, b []byte) int")
+	TEXT("writeBlocksAvx512", NOSPLIT|NOFRAME, "func(d *[4]uint64, extra *[32]byte, b []byte)")
 	d := Load(Param("d"), GP64())
+	extra := Load(Param("extra"), GP64())
 	p := Load(Param("b").Base(), GP64())
 	n := Load(Param("b").Len(), GP64())
 
 	state := YMM()
 	VMOVDQU(Mem{Base: d, Disp: 0}, state)
 
-	p1, p2 := GP64(), GP64()
+	p1, p2, yprime1, yprime2 := GP64(), GP64(), YMM(), YMM()
 	MOVQ(Imm(prime1), p1)
+	VPBROADCASTQ(p1, yprime1)
 	MOVQ(Imm(prime2), p2)
+	VPBROADCASTQ(p2, yprime2)
 
-	processed := GP64()
-	blockLoop(state, p, n, p1, p2, processed)
+	TESTQ(extra, extra)
+	JZ(LabelRef("skip_extra"))
+	{
+		round(state, extra, yprime1, yprime2)
+	}
+	Label("skip_extra")
+
+	blockLoop(state, p, n, yprime1, yprime2)
 	VMOVDQU(state, Mem{Base: d, Disp: 0})
 	VZEROUPPER()
-
-	Store(processed, ReturnIndex(0))
 	RET()
 }
 
