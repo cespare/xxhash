@@ -58,7 +58,7 @@ loop:  \
 	JLE  loop
 
 // func sum64(b []byte) uint64
-TEXT ·sum64(SB), NOSPLIT|NOFRAME, $0-32
+TEXT ·sum64scallar(SB), NOSPLIT|NOFRAME, $0-32
 	// Load fixed primes.
 	MOVQ ·primes+0(SB), prime1
 	MOVQ ·primes+8(SB), prime2
@@ -173,8 +173,8 @@ finalize:
 	MOVQ h, ret+24(FP)
 	RET
 
-// func writeBlocks(d *Digest, b []byte) int
-TEXT ·writeBlocks(SB), NOSPLIT|NOFRAME, $0-40
+// func writeBlocksScallar(d *Digest, b []byte) int
+TEXT ·writeBlocksScallar(SB), NOSPLIT|NOFRAME, $0-40
 	// Load fixed primes needed for round.
 	MOVQ ·primes+0(SB), prime1
 	MOVQ ·primes+8(SB), prime2

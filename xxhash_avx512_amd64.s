@@ -150,3 +150,33 @@ zero:
 	MOVQ $0xef46db3751d8e999, R9
 	MOVQ R9, ret+24(FP)
 	RET
+
+// func writeBlocksAvx512(d *[4]uint64, b []byte) int
+// Requires: AVX, AVX2, AVX512DQ, AVX512F, AVX512VL, BMI
+TEXT ·writeBlocksAvx512(SB), NOSPLIT|NOFRAME, $0-40
+	MOVQ         d+0(FP), AX
+	MOVQ         b_base+8(FP), CX
+	MOVQ         b_len+16(FP), DX
+	VMOVDQU      (AX), Y0
+	MOVQ         $0x9e3779b185ebca87, BX
+	MOVQ         $0xc2b2ae3d27d4eb4f, SI
+	MOVL         $0x0000001f, DI
+	ANDNQ        DX, DI, DI
+	MOVQ         DI, DX
+	ADDQ         CX, DI
+	VPBROADCASTQ BX, Y1
+	VPBROADCASTQ SI, Y2
+
+loop_32:
+	VMOVDQU (CX), Y3
+	ADDQ    $0x20, CX
+	VPMULLQ Y3, Y2, Y3
+	VPADDQ  Y3, Y0, Y0
+	VPROLQ  $0x1f, Y0, Y0
+	VPMULLQ Y0, Y1, Y0
+	CMPQ    CX, DI
+	JNE     loop_32
+	VMOVDQU Y0, (AX)
+	VZEROUPPER
+	MOVQ    DX, ret+32(FP)
+	RET

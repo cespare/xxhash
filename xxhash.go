@@ -27,10 +27,7 @@ var primes = [...]uint64{prime1, prime2, prime3, prime4, prime5}
 // Note that a zero-valued Digest is not ready to receive writes.
 // Call Reset or create a Digest using New before calling other methods.
 type Digest struct {
-	v1    uint64
-	v2    uint64
-	v3    uint64
-	v4    uint64
+	s     [4]uint64
 	total uint64
 	mem   [32]byte
 	n     int // how much of mem is used
@@ -57,10 +54,10 @@ func (d *Digest) Reset() {
 // ResetWithSeed clears the Digest's state so that it can be reused.
 // It uses the given seed to initialize the state.
 func (d *Digest) ResetWithSeed(seed uint64) {
-	d.v1 = seed + prime1 + prime2
-	d.v2 = seed + prime2
-	d.v3 = seed
-	d.v4 = seed - prime1
+	d.s[0] = seed + prime1 + prime2
+	d.s[1] = seed + prime2
+	d.s[2] = seed
+	d.s[3] = seed - prime1
 	d.total = 0
 	d.n = 0
 }
@@ -88,10 +85,10 @@ func (d *Digest) Write(b []byte) (n int, err error) {
 	if d.n > 0 {
 		// Finish off the partial block.
 		c := copy(memleft, b)
-		d.v1 = round(d.v1, u64(d.mem[0:8]))
-		d.v2 = round(d.v2, u64(d.mem[8:16]))
-		d.v3 = round(d.v3, u64(d.mem[16:24]))
-		d.v4 = round(d.v4, u64(d.mem[24:32]))
+		d.s[0] = round(d.s[0], u64(d.mem[0:8]))
+		d.s[1] = round(d.s[1], u64(d.mem[8:16]))
+		d.s[2] = round(d.s[2], u64(d.mem[16:24]))
+		d.s[3] = round(d.s[3], u64(d.mem[24:32]))
 		b = b[c:]
 		d.n = 0
 	}
@@ -130,14 +127,14 @@ func (d *Digest) Sum64() uint64 {
 	var h uint64
 
 	if d.total >= 32 {
-		v1, v2, v3, v4 := d.v1, d.v2, d.v3, d.v4
+		v1, v2, v3, v4 := d.s[0], d.s[1], d.s[2], d.s[3]
 		h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 		h = mergeRound(h, v1)
 		h = mergeRound(h, v2)
 		h = mergeRound(h, v3)
 		h = mergeRound(h, v4)
 	} else {
-		h = d.v3 + prime5
+		h = d.s[2] + prime5
 	}
 
 	h += d.total
@@ -176,10 +173,10 @@ const (
 func (d *Digest) MarshalBinary() ([]byte, error) {
 	b := make([]byte, 0, marshaledSize)
 	b = append(b, magic...)
-	b = appendUint64(b, d.v1)
-	b = appendUint64(b, d.v2)
-	b = appendUint64(b, d.v3)
-	b = appendUint64(b, d.v4)
+	b = appendUint64(b, d.s[0])
+	b = appendUint64(b, d.s[1])
+	b = appendUint64(b, d.s[2])
+	b = appendUint64(b, d.s[3])
 	b = appendUint64(b, d.total)
 	b = append(b, d.mem[:d.n]...)
 	b = b[:len(b)+len(d.mem)-d.n]
@@ -195,10 +192,10 @@ func (d *Digest) UnmarshalBinary(b []byte) error {
 		return errors.New("xxhash: invalid hash state size")
 	}
 	b = b[len(magic):]
-	b, d.v1 = consumeUint64(b)
-	b, d.v2 = consumeUint64(b)
-	b, d.v3 = consumeUint64(b)
-	b, d.v4 = consumeUint64(b)
+	b, d.s[0] = consumeUint64(b)
+	b, d.s[1] = consumeUint64(b)
+	b, d.s[2] = consumeUint64(b)
+	b, d.s[3] = consumeUint64(b)
 	b, d.total = consumeUint64(b)
 	copy(d.mem[:], b)
 	d.n = int(d.total % uint64(len(d.mem)))
