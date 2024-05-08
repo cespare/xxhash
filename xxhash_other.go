@@ -3,6 +3,8 @@
 
 package xxhash
 
+var useAvx512 = false
+
 // Sum64 computes the 64-bit xxHash digest of b with a zero seed.
 func Sum64(b []byte) uint64 {
 	// A simpler version would be

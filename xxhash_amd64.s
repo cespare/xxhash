@@ -57,8 +57,8 @@ loop:  \
 	CMPQ p, end    \
 	JLE  loop
 
-// func Sum64(b []byte) uint64
-TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
+// func sum64(b []byte) uint64
+TEXT ·sum64(SB), NOSPLIT|NOFRAME, $0-32
 	// Load fixed primes.
 	MOVQ ·primes+0(SB), prime1
 	MOVQ ·primes+8(SB), prime2

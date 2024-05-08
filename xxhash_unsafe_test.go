@@ -13,12 +13,12 @@ import (
 func TestStringAllocs(t *testing.T) {
 	longStr := strings.Repeat("a", 1000)
 	t.Run("Sum64String", func(t *testing.T) {
-		testAllocs(t, func() {
+		runAllocs(t, func() {
 			sink = Sum64String(longStr)
 		})
 	})
 	t.Run("Digest.WriteString", func(t *testing.T) {
-		testAllocs(t, func() {
+		runAllocs(t, func() {
 			d := New()
 			d.WriteString(longStr)
 			sink = d.Sum64()
