@@ -71,18 +71,18 @@ func writeBlocks(d *Digest, extra *[32]byte, b []byte) {
 	} else {
 		s = b
 	}
+reHash:
 	for len(s) >= 32 {
-		for len(s) >= 32 {
-			v1 = round(v1, u64(s[0:8:len(s)]))
-			v2 = round(v2, u64(s[8:16:len(s)]))
-			v3 = round(v3, u64(s[16:24:len(s)]))
-			v4 = round(v4, u64(s[24:32:len(s)]))
-			s = s[32:len(s):len(s)]
-		}
-		if extra != nil {
-			s = b
-			extra = nil
-		}
+		v1 = round(v1, u64(s[0:8:len(s)]))
+		v2 = round(v2, u64(s[8:16:len(s)]))
+		v3 = round(v3, u64(s[16:24:len(s)]))
+		v4 = round(v4, u64(s[24:32:len(s)]))
+		s = s[32:len(s):len(s)]
+	}
+	if extra != nil {
+		s = b
+		extra = nil
+		goto reHash
 	}
 	d.s[0], d.s[1], d.s[2], d.s[3] = v1, v2, v3, v4
 }
