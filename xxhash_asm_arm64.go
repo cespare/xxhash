@@ -3,7 +3,7 @@
 
 package xxhash
 
-var useAvx512 = false
+var useAvx512 = false // used in tests
 
 // Sum64 computes the 64-bit xxHash digest of b with a zero seed.
 //
