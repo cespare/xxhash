@@ -1,7 +1,7 @@
 //go:build amd64 && !appengine && gc && !purego
 // +build amd64,!appengine,gc,!purego
 
-//go:generate go run -tags purego ./gen -out xxhash_avx512_amd64.s
+//go:generate sh -c "cd gen && go run -tags purego . -out xxhash_avx512_amd64.s"
 
 package xxhash
 

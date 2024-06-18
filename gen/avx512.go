@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/cespare/xxhash/v2"
 	. "github.com/mmcloughlin/avo/build"
 	. "github.com/mmcloughlin/avo/operand"
@@ -242,6 +244,9 @@ func writeBlocks() {
 }
 
 func main() {
+	if err := os.Chdir(".."); err != nil {
+		panic(err)
+	}
 	sum64()
 	writeBlocks()
 	Generate()
