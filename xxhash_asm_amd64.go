@@ -1,5 +1,5 @@
-//go:build amd64 && !appengine && gc && !purego
-// +build amd64,!appengine,gc,!purego
+//go:build amd64 && !appengine && gc && !purego && go1.22
+// +build amd64,!appengine,gc,!purego,go1.22
 
 package xxhash
 
