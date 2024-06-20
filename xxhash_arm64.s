@@ -161,8 +161,8 @@ finalize:
 	MOVD h, ret+24(FP)
 	RET
 
-// func writeBlocks(d *Digest, b []byte) int
-TEXT ·writeBlocks(SB), NOSPLIT|NOFRAME, $0-40
+// func writeBlocksArm64(d *Digest, b []byte)
+TEXT ·writeBlocksArm64(SB), NOSPLIT|NOFRAME, $0-32
 	LDP ·primes+0(SB), (prime1, prime2)
 
 	// Load state. Assume v[1-4] are stored contiguously.
@@ -178,6 +178,4 @@ TEXT ·writeBlocks(SB), NOSPLIT|NOFRAME, $0-40
 	STP (v1, v2), 0(digest)
 	STP (v3, v4), 16(digest)
 
-	BIC  $31, n
-	MOVD n, ret+32(FP)
 	RET

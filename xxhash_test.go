@@ -9,7 +9,28 @@ import (
 	"testing"
 )
 
-func TestAll(t *testing.T) {
+func Test(t *testing.T) {
+	for {
+		var suffix string
+		if useAvx512 {
+			suffix = "-avx512"
+		}
+
+		t.Run("All"+suffix, testAll)
+		t.Run("Reset"+suffix, testReset)
+		t.Run("ResetWithSeed"+suffix, testResetWithSeed)
+		t.Run("BinaryMarshaling"+suffix, testBinaryMarshaling)
+
+		if useAvx512 {
+			useAvx512 = false
+			defer func() { useAvx512 = true }()
+			continue
+		}
+		return
+	}
+}
+
+func testAll(t *testing.T) {
 	// Exactly 63 characters, which exercises all code paths.
 	const s63 = "Call me Ishmael. Some years ago--never mind how long precisely-"
 	for _, tt := range []struct {
@@ -94,7 +115,7 @@ func testSum(t *testing.T, input string, want uint64) {
 	}
 }
 
-func TestReset(t *testing.T) {
+func testReset(t *testing.T) {
 	parts := []string{"The quic", "k br", "o", "wn fox jumps", " ov", "er the lazy ", "dog."}
 	d := New()
 	for _, part := range parts {
@@ -111,7 +132,7 @@ func TestReset(t *testing.T) {
 	}
 }
 
-func TestResetWithSeed(t *testing.T) {
+func testResetWithSeed(t *testing.T) {
 	parts := []string{"The quic", "k br", "o", "wn fox jumps", " ov", "er the lazy ", "dog."}
 	d := NewWithSeed(123)
 	for _, part := range parts {
@@ -128,7 +149,7 @@ func TestResetWithSeed(t *testing.T) {
 	}
 }
 
-func TestBinaryMarshaling(t *testing.T) {
+func testBinaryMarshaling(t *testing.T) {
 	d := New()
 	d.WriteString("abc")
 	b, err := d.MarshalBinary()
@@ -173,7 +194,7 @@ func TestAllocs(t *testing.T) {
 	// intermediate []byte ought not to escape.
 	// (See https://github.com/cespare/xxhash/pull/2.)
 	t.Run("Sum64", func(t *testing.T) {
-		testAllocs(t, func() {
+		runAllocs(t, func() {
 			sink = Sum64([]byte(shortStr))
 		})
 	})
@@ -182,7 +203,7 @@ func TestAllocs(t *testing.T) {
 	// hash.Hash64 which forces an allocation.)
 	t.Run("Digest", func(t *testing.T) {
 		b := []byte("asdf")
-		testAllocs(t, func() {
+		runAllocs(t, func() {
 			d := New()
 			d.Write(b)
 			sink = d.Sum64()
@@ -190,7 +211,7 @@ func TestAllocs(t *testing.T) {
 	})
 }
 
-func testAllocs(t *testing.T, fn func()) {
+func runAllocs(t *testing.T, fn func()) {
 	t.Helper()
 	if allocs := int(testing.AllocsPerRun(10, fn)); allocs > 0 {
 		t.Fatalf("got %d allocation(s) (want zero)", allocs)
