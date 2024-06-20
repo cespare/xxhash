@@ -90,13 +90,23 @@ func slide(b []byte) uint64 {
 		i := sumSlideSize - k
 		for ; i >= 32; i -= 32 {
 			fmt.Fprintf(w, `sz_%d:
-	v1 = round(v1, u64(b_%d[0:8]))
-	v2 = round(v2, u64(b_%d[8:16]))
-	v3 = round(v3, u64(b_%d[16:24]))
-	v4 = round(v4, u64(b_%d[24:32]))
-	b_%d = (*[%d]byte)(b_%d[32:])
+	{
+		b := b_%d[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_%d = (*[%d]byte)(b_%d[32:])
+	}
 
-`, i, i, i, i, i, i-32, i-32, i)
+`, i, i, i-32, i-32, i)
 			// POTENTIAL OPTIMIZATION: b[32:] creates an addition to bump the pointer which means the address dependency on the memory loads is not resolved before the jmp table. I know two fixes:
 			// - change b to a pointer to the end of the slice and subtract the total offset. I don't know how to do this in pure go.
 			// - don't bother reusing the slides, this means each load instruction can hardcode the offset. Make the code significantly bigger and i-cache worst, altho I didn't tried it.
@@ -122,9 +132,13 @@ func slide(b []byte) uint64 {
 		i := 31 - k
 		for ; i >= 8; i -= 8 {
 			fmt.Fprintf(w, `sz_%dl:
-	h ^= round(0, u64(b_%d[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_%d = (*[%d]byte)(b_%d[8:])
+	{
+		b := b_%d[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_%d = (*[%d]byte)(b_%d[8:])
+	}
 
 `, i, i, i-8, i-8, i)
 		}
@@ -137,10 +151,14 @@ func slide(b []byte) uint64 {
 	for k := range 4 {
 		i := 7 - k
 		fmt.Fprintf(w, `sz_%dl:
-	h ^= uint64(u32(b_%d[:4])) * prime1
-	h = rol23(h)*prime2 + prime3
-	b_%d = (*[%d]byte)(b_%d[4:])
-	goto sz_%dl
+	{
+		b := b_%d[:]
+		load := uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24 // Work around for go.dev/issue/68081.
+		h ^= uint64(load) * prime1
+		h = rol23(h)*prime2 + prime3
+		b_%d = (*[%d]byte)(b_%d[4:])
+		goto sz_%dl
+	}
 
 `, i, i, i-4, i-4, i, i-4)
 	}

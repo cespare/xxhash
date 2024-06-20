@@ -567,25 +567,55 @@ func slide(b []byte) uint64 {
 
 	// Theses are the main slides, they handle 32 bytes 4 × 8 bytes at a time using ILP.
 sz_127:
-	v1 = round(v1, u64(b_127[0:8]))
-	v2 = round(v2, u64(b_127[8:16]))
-	v3 = round(v3, u64(b_127[16:24]))
-	v4 = round(v4, u64(b_127[24:32]))
-	b_95 = (*[95]byte)(b_127[32:])
+	{
+		b := b_127[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_95 = (*[95]byte)(b_127[32:])
+	}
 
 sz_95:
-	v1 = round(v1, u64(b_95[0:8]))
-	v2 = round(v2, u64(b_95[8:16]))
-	v3 = round(v3, u64(b_95[16:24]))
-	v4 = round(v4, u64(b_95[24:32]))
-	b_63 = (*[63]byte)(b_95[32:])
+	{
+		b := b_95[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_63 = (*[63]byte)(b_95[32:])
+	}
 
 sz_63:
-	v1 = round(v1, u64(b_63[0:8]))
-	v2 = round(v2, u64(b_63[8:16]))
-	v3 = round(v3, u64(b_63[16:24]))
-	v4 = round(v4, u64(b_63[24:32]))
-	b_31 = (*[31]byte)(b_63[32:])
+	{
+		b := b_63[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_31 = (*[31]byte)(b_63[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -598,25 +628,55 @@ sz_31:
 	goto sz_31l
 
 sz_126:
-	v1 = round(v1, u64(b_126[0:8]))
-	v2 = round(v2, u64(b_126[8:16]))
-	v3 = round(v3, u64(b_126[16:24]))
-	v4 = round(v4, u64(b_126[24:32]))
-	b_94 = (*[94]byte)(b_126[32:])
+	{
+		b := b_126[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_94 = (*[94]byte)(b_126[32:])
+	}
 
 sz_94:
-	v1 = round(v1, u64(b_94[0:8]))
-	v2 = round(v2, u64(b_94[8:16]))
-	v3 = round(v3, u64(b_94[16:24]))
-	v4 = round(v4, u64(b_94[24:32]))
-	b_62 = (*[62]byte)(b_94[32:])
+	{
+		b := b_94[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_62 = (*[62]byte)(b_94[32:])
+	}
 
 sz_62:
-	v1 = round(v1, u64(b_62[0:8]))
-	v2 = round(v2, u64(b_62[8:16]))
-	v3 = round(v3, u64(b_62[16:24]))
-	v4 = round(v4, u64(b_62[24:32]))
-	b_30 = (*[30]byte)(b_62[32:])
+	{
+		b := b_62[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_30 = (*[30]byte)(b_62[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -629,25 +689,55 @@ sz_30:
 	goto sz_30l
 
 sz_125:
-	v1 = round(v1, u64(b_125[0:8]))
-	v2 = round(v2, u64(b_125[8:16]))
-	v3 = round(v3, u64(b_125[16:24]))
-	v4 = round(v4, u64(b_125[24:32]))
-	b_93 = (*[93]byte)(b_125[32:])
+	{
+		b := b_125[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_93 = (*[93]byte)(b_125[32:])
+	}
 
 sz_93:
-	v1 = round(v1, u64(b_93[0:8]))
-	v2 = round(v2, u64(b_93[8:16]))
-	v3 = round(v3, u64(b_93[16:24]))
-	v4 = round(v4, u64(b_93[24:32]))
-	b_61 = (*[61]byte)(b_93[32:])
+	{
+		b := b_93[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_61 = (*[61]byte)(b_93[32:])
+	}
 
 sz_61:
-	v1 = round(v1, u64(b_61[0:8]))
-	v2 = round(v2, u64(b_61[8:16]))
-	v3 = round(v3, u64(b_61[16:24]))
-	v4 = round(v4, u64(b_61[24:32]))
-	b_29 = (*[29]byte)(b_61[32:])
+	{
+		b := b_61[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_29 = (*[29]byte)(b_61[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -660,25 +750,55 @@ sz_29:
 	goto sz_29l
 
 sz_124:
-	v1 = round(v1, u64(b_124[0:8]))
-	v2 = round(v2, u64(b_124[8:16]))
-	v3 = round(v3, u64(b_124[16:24]))
-	v4 = round(v4, u64(b_124[24:32]))
-	b_92 = (*[92]byte)(b_124[32:])
+	{
+		b := b_124[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_92 = (*[92]byte)(b_124[32:])
+	}
 
 sz_92:
-	v1 = round(v1, u64(b_92[0:8]))
-	v2 = round(v2, u64(b_92[8:16]))
-	v3 = round(v3, u64(b_92[16:24]))
-	v4 = round(v4, u64(b_92[24:32]))
-	b_60 = (*[60]byte)(b_92[32:])
+	{
+		b := b_92[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_60 = (*[60]byte)(b_92[32:])
+	}
 
 sz_60:
-	v1 = round(v1, u64(b_60[0:8]))
-	v2 = round(v2, u64(b_60[8:16]))
-	v3 = round(v3, u64(b_60[16:24]))
-	v4 = round(v4, u64(b_60[24:32]))
-	b_28 = (*[28]byte)(b_60[32:])
+	{
+		b := b_60[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_28 = (*[28]byte)(b_60[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -691,25 +811,55 @@ sz_28:
 	goto sz_28l
 
 sz_123:
-	v1 = round(v1, u64(b_123[0:8]))
-	v2 = round(v2, u64(b_123[8:16]))
-	v3 = round(v3, u64(b_123[16:24]))
-	v4 = round(v4, u64(b_123[24:32]))
-	b_91 = (*[91]byte)(b_123[32:])
+	{
+		b := b_123[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_91 = (*[91]byte)(b_123[32:])
+	}
 
 sz_91:
-	v1 = round(v1, u64(b_91[0:8]))
-	v2 = round(v2, u64(b_91[8:16]))
-	v3 = round(v3, u64(b_91[16:24]))
-	v4 = round(v4, u64(b_91[24:32]))
-	b_59 = (*[59]byte)(b_91[32:])
+	{
+		b := b_91[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_59 = (*[59]byte)(b_91[32:])
+	}
 
 sz_59:
-	v1 = round(v1, u64(b_59[0:8]))
-	v2 = round(v2, u64(b_59[8:16]))
-	v3 = round(v3, u64(b_59[16:24]))
-	v4 = round(v4, u64(b_59[24:32]))
-	b_27 = (*[27]byte)(b_59[32:])
+	{
+		b := b_59[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_27 = (*[27]byte)(b_59[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -722,25 +872,55 @@ sz_27:
 	goto sz_27l
 
 sz_122:
-	v1 = round(v1, u64(b_122[0:8]))
-	v2 = round(v2, u64(b_122[8:16]))
-	v3 = round(v3, u64(b_122[16:24]))
-	v4 = round(v4, u64(b_122[24:32]))
-	b_90 = (*[90]byte)(b_122[32:])
+	{
+		b := b_122[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_90 = (*[90]byte)(b_122[32:])
+	}
 
 sz_90:
-	v1 = round(v1, u64(b_90[0:8]))
-	v2 = round(v2, u64(b_90[8:16]))
-	v3 = round(v3, u64(b_90[16:24]))
-	v4 = round(v4, u64(b_90[24:32]))
-	b_58 = (*[58]byte)(b_90[32:])
+	{
+		b := b_90[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_58 = (*[58]byte)(b_90[32:])
+	}
 
 sz_58:
-	v1 = round(v1, u64(b_58[0:8]))
-	v2 = round(v2, u64(b_58[8:16]))
-	v3 = round(v3, u64(b_58[16:24]))
-	v4 = round(v4, u64(b_58[24:32]))
-	b_26 = (*[26]byte)(b_58[32:])
+	{
+		b := b_58[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_26 = (*[26]byte)(b_58[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -753,25 +933,55 @@ sz_26:
 	goto sz_26l
 
 sz_121:
-	v1 = round(v1, u64(b_121[0:8]))
-	v2 = round(v2, u64(b_121[8:16]))
-	v3 = round(v3, u64(b_121[16:24]))
-	v4 = round(v4, u64(b_121[24:32]))
-	b_89 = (*[89]byte)(b_121[32:])
+	{
+		b := b_121[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_89 = (*[89]byte)(b_121[32:])
+	}
 
 sz_89:
-	v1 = round(v1, u64(b_89[0:8]))
-	v2 = round(v2, u64(b_89[8:16]))
-	v3 = round(v3, u64(b_89[16:24]))
-	v4 = round(v4, u64(b_89[24:32]))
-	b_57 = (*[57]byte)(b_89[32:])
+	{
+		b := b_89[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_57 = (*[57]byte)(b_89[32:])
+	}
 
 sz_57:
-	v1 = round(v1, u64(b_57[0:8]))
-	v2 = round(v2, u64(b_57[8:16]))
-	v3 = round(v3, u64(b_57[16:24]))
-	v4 = round(v4, u64(b_57[24:32]))
-	b_25 = (*[25]byte)(b_57[32:])
+	{
+		b := b_57[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_25 = (*[25]byte)(b_57[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -784,25 +994,55 @@ sz_25:
 	goto sz_25l
 
 sz_120:
-	v1 = round(v1, u64(b_120[0:8]))
-	v2 = round(v2, u64(b_120[8:16]))
-	v3 = round(v3, u64(b_120[16:24]))
-	v4 = round(v4, u64(b_120[24:32]))
-	b_88 = (*[88]byte)(b_120[32:])
+	{
+		b := b_120[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_88 = (*[88]byte)(b_120[32:])
+	}
 
 sz_88:
-	v1 = round(v1, u64(b_88[0:8]))
-	v2 = round(v2, u64(b_88[8:16]))
-	v3 = round(v3, u64(b_88[16:24]))
-	v4 = round(v4, u64(b_88[24:32]))
-	b_56 = (*[56]byte)(b_88[32:])
+	{
+		b := b_88[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_56 = (*[56]byte)(b_88[32:])
+	}
 
 sz_56:
-	v1 = round(v1, u64(b_56[0:8]))
-	v2 = round(v2, u64(b_56[8:16]))
-	v3 = round(v3, u64(b_56[16:24]))
-	v4 = round(v4, u64(b_56[24:32]))
-	b_24 = (*[24]byte)(b_56[32:])
+	{
+		b := b_56[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_24 = (*[24]byte)(b_56[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -815,25 +1055,55 @@ sz_24:
 	goto sz_24l
 
 sz_119:
-	v1 = round(v1, u64(b_119[0:8]))
-	v2 = round(v2, u64(b_119[8:16]))
-	v3 = round(v3, u64(b_119[16:24]))
-	v4 = round(v4, u64(b_119[24:32]))
-	b_87 = (*[87]byte)(b_119[32:])
+	{
+		b := b_119[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_87 = (*[87]byte)(b_119[32:])
+	}
 
 sz_87:
-	v1 = round(v1, u64(b_87[0:8]))
-	v2 = round(v2, u64(b_87[8:16]))
-	v3 = round(v3, u64(b_87[16:24]))
-	v4 = round(v4, u64(b_87[24:32]))
-	b_55 = (*[55]byte)(b_87[32:])
+	{
+		b := b_87[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_55 = (*[55]byte)(b_87[32:])
+	}
 
 sz_55:
-	v1 = round(v1, u64(b_55[0:8]))
-	v2 = round(v2, u64(b_55[8:16]))
-	v3 = round(v3, u64(b_55[16:24]))
-	v4 = round(v4, u64(b_55[24:32]))
-	b_23 = (*[23]byte)(b_55[32:])
+	{
+		b := b_55[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_23 = (*[23]byte)(b_55[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -846,25 +1116,55 @@ sz_23:
 	goto sz_23l
 
 sz_118:
-	v1 = round(v1, u64(b_118[0:8]))
-	v2 = round(v2, u64(b_118[8:16]))
-	v3 = round(v3, u64(b_118[16:24]))
-	v4 = round(v4, u64(b_118[24:32]))
-	b_86 = (*[86]byte)(b_118[32:])
+	{
+		b := b_118[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_86 = (*[86]byte)(b_118[32:])
+	}
 
 sz_86:
-	v1 = round(v1, u64(b_86[0:8]))
-	v2 = round(v2, u64(b_86[8:16]))
-	v3 = round(v3, u64(b_86[16:24]))
-	v4 = round(v4, u64(b_86[24:32]))
-	b_54 = (*[54]byte)(b_86[32:])
+	{
+		b := b_86[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_54 = (*[54]byte)(b_86[32:])
+	}
 
 sz_54:
-	v1 = round(v1, u64(b_54[0:8]))
-	v2 = round(v2, u64(b_54[8:16]))
-	v3 = round(v3, u64(b_54[16:24]))
-	v4 = round(v4, u64(b_54[24:32]))
-	b_22 = (*[22]byte)(b_54[32:])
+	{
+		b := b_54[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_22 = (*[22]byte)(b_54[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -877,25 +1177,55 @@ sz_22:
 	goto sz_22l
 
 sz_117:
-	v1 = round(v1, u64(b_117[0:8]))
-	v2 = round(v2, u64(b_117[8:16]))
-	v3 = round(v3, u64(b_117[16:24]))
-	v4 = round(v4, u64(b_117[24:32]))
-	b_85 = (*[85]byte)(b_117[32:])
+	{
+		b := b_117[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_85 = (*[85]byte)(b_117[32:])
+	}
 
 sz_85:
-	v1 = round(v1, u64(b_85[0:8]))
-	v2 = round(v2, u64(b_85[8:16]))
-	v3 = round(v3, u64(b_85[16:24]))
-	v4 = round(v4, u64(b_85[24:32]))
-	b_53 = (*[53]byte)(b_85[32:])
+	{
+		b := b_85[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_53 = (*[53]byte)(b_85[32:])
+	}
 
 sz_53:
-	v1 = round(v1, u64(b_53[0:8]))
-	v2 = round(v2, u64(b_53[8:16]))
-	v3 = round(v3, u64(b_53[16:24]))
-	v4 = round(v4, u64(b_53[24:32]))
-	b_21 = (*[21]byte)(b_53[32:])
+	{
+		b := b_53[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_21 = (*[21]byte)(b_53[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -908,25 +1238,55 @@ sz_21:
 	goto sz_21l
 
 sz_116:
-	v1 = round(v1, u64(b_116[0:8]))
-	v2 = round(v2, u64(b_116[8:16]))
-	v3 = round(v3, u64(b_116[16:24]))
-	v4 = round(v4, u64(b_116[24:32]))
-	b_84 = (*[84]byte)(b_116[32:])
+	{
+		b := b_116[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_84 = (*[84]byte)(b_116[32:])
+	}
 
 sz_84:
-	v1 = round(v1, u64(b_84[0:8]))
-	v2 = round(v2, u64(b_84[8:16]))
-	v3 = round(v3, u64(b_84[16:24]))
-	v4 = round(v4, u64(b_84[24:32]))
-	b_52 = (*[52]byte)(b_84[32:])
+	{
+		b := b_84[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_52 = (*[52]byte)(b_84[32:])
+	}
 
 sz_52:
-	v1 = round(v1, u64(b_52[0:8]))
-	v2 = round(v2, u64(b_52[8:16]))
-	v3 = round(v3, u64(b_52[16:24]))
-	v4 = round(v4, u64(b_52[24:32]))
-	b_20 = (*[20]byte)(b_52[32:])
+	{
+		b := b_52[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_20 = (*[20]byte)(b_52[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -939,25 +1299,55 @@ sz_20:
 	goto sz_20l
 
 sz_115:
-	v1 = round(v1, u64(b_115[0:8]))
-	v2 = round(v2, u64(b_115[8:16]))
-	v3 = round(v3, u64(b_115[16:24]))
-	v4 = round(v4, u64(b_115[24:32]))
-	b_83 = (*[83]byte)(b_115[32:])
+	{
+		b := b_115[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_83 = (*[83]byte)(b_115[32:])
+	}
 
 sz_83:
-	v1 = round(v1, u64(b_83[0:8]))
-	v2 = round(v2, u64(b_83[8:16]))
-	v3 = round(v3, u64(b_83[16:24]))
-	v4 = round(v4, u64(b_83[24:32]))
-	b_51 = (*[51]byte)(b_83[32:])
+	{
+		b := b_83[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_51 = (*[51]byte)(b_83[32:])
+	}
 
 sz_51:
-	v1 = round(v1, u64(b_51[0:8]))
-	v2 = round(v2, u64(b_51[8:16]))
-	v3 = round(v3, u64(b_51[16:24]))
-	v4 = round(v4, u64(b_51[24:32]))
-	b_19 = (*[19]byte)(b_51[32:])
+	{
+		b := b_51[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_19 = (*[19]byte)(b_51[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -970,25 +1360,55 @@ sz_19:
 	goto sz_19l
 
 sz_114:
-	v1 = round(v1, u64(b_114[0:8]))
-	v2 = round(v2, u64(b_114[8:16]))
-	v3 = round(v3, u64(b_114[16:24]))
-	v4 = round(v4, u64(b_114[24:32]))
-	b_82 = (*[82]byte)(b_114[32:])
+	{
+		b := b_114[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_82 = (*[82]byte)(b_114[32:])
+	}
 
 sz_82:
-	v1 = round(v1, u64(b_82[0:8]))
-	v2 = round(v2, u64(b_82[8:16]))
-	v3 = round(v3, u64(b_82[16:24]))
-	v4 = round(v4, u64(b_82[24:32]))
-	b_50 = (*[50]byte)(b_82[32:])
+	{
+		b := b_82[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_50 = (*[50]byte)(b_82[32:])
+	}
 
 sz_50:
-	v1 = round(v1, u64(b_50[0:8]))
-	v2 = round(v2, u64(b_50[8:16]))
-	v3 = round(v3, u64(b_50[16:24]))
-	v4 = round(v4, u64(b_50[24:32]))
-	b_18 = (*[18]byte)(b_50[32:])
+	{
+		b := b_50[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_18 = (*[18]byte)(b_50[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1001,25 +1421,55 @@ sz_18:
 	goto sz_18l
 
 sz_113:
-	v1 = round(v1, u64(b_113[0:8]))
-	v2 = round(v2, u64(b_113[8:16]))
-	v3 = round(v3, u64(b_113[16:24]))
-	v4 = round(v4, u64(b_113[24:32]))
-	b_81 = (*[81]byte)(b_113[32:])
+	{
+		b := b_113[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_81 = (*[81]byte)(b_113[32:])
+	}
 
 sz_81:
-	v1 = round(v1, u64(b_81[0:8]))
-	v2 = round(v2, u64(b_81[8:16]))
-	v3 = round(v3, u64(b_81[16:24]))
-	v4 = round(v4, u64(b_81[24:32]))
-	b_49 = (*[49]byte)(b_81[32:])
+	{
+		b := b_81[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_49 = (*[49]byte)(b_81[32:])
+	}
 
 sz_49:
-	v1 = round(v1, u64(b_49[0:8]))
-	v2 = round(v2, u64(b_49[8:16]))
-	v3 = round(v3, u64(b_49[16:24]))
-	v4 = round(v4, u64(b_49[24:32]))
-	b_17 = (*[17]byte)(b_49[32:])
+	{
+		b := b_49[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_17 = (*[17]byte)(b_49[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1032,25 +1482,55 @@ sz_17:
 	goto sz_17l
 
 sz_112:
-	v1 = round(v1, u64(b_112[0:8]))
-	v2 = round(v2, u64(b_112[8:16]))
-	v3 = round(v3, u64(b_112[16:24]))
-	v4 = round(v4, u64(b_112[24:32]))
-	b_80 = (*[80]byte)(b_112[32:])
+	{
+		b := b_112[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_80 = (*[80]byte)(b_112[32:])
+	}
 
 sz_80:
-	v1 = round(v1, u64(b_80[0:8]))
-	v2 = round(v2, u64(b_80[8:16]))
-	v3 = round(v3, u64(b_80[16:24]))
-	v4 = round(v4, u64(b_80[24:32]))
-	b_48 = (*[48]byte)(b_80[32:])
+	{
+		b := b_80[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_48 = (*[48]byte)(b_80[32:])
+	}
 
 sz_48:
-	v1 = round(v1, u64(b_48[0:8]))
-	v2 = round(v2, u64(b_48[8:16]))
-	v3 = round(v3, u64(b_48[16:24]))
-	v4 = round(v4, u64(b_48[24:32]))
-	b_16 = (*[16]byte)(b_48[32:])
+	{
+		b := b_48[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_16 = (*[16]byte)(b_48[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1063,25 +1543,55 @@ sz_16:
 	goto sz_16l
 
 sz_111:
-	v1 = round(v1, u64(b_111[0:8]))
-	v2 = round(v2, u64(b_111[8:16]))
-	v3 = round(v3, u64(b_111[16:24]))
-	v4 = round(v4, u64(b_111[24:32]))
-	b_79 = (*[79]byte)(b_111[32:])
+	{
+		b := b_111[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_79 = (*[79]byte)(b_111[32:])
+	}
 
 sz_79:
-	v1 = round(v1, u64(b_79[0:8]))
-	v2 = round(v2, u64(b_79[8:16]))
-	v3 = round(v3, u64(b_79[16:24]))
-	v4 = round(v4, u64(b_79[24:32]))
-	b_47 = (*[47]byte)(b_79[32:])
+	{
+		b := b_79[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_47 = (*[47]byte)(b_79[32:])
+	}
 
 sz_47:
-	v1 = round(v1, u64(b_47[0:8]))
-	v2 = round(v2, u64(b_47[8:16]))
-	v3 = round(v3, u64(b_47[16:24]))
-	v4 = round(v4, u64(b_47[24:32]))
-	b_15 = (*[15]byte)(b_47[32:])
+	{
+		b := b_47[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_15 = (*[15]byte)(b_47[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1094,25 +1604,55 @@ sz_15:
 	goto sz_15l
 
 sz_110:
-	v1 = round(v1, u64(b_110[0:8]))
-	v2 = round(v2, u64(b_110[8:16]))
-	v3 = round(v3, u64(b_110[16:24]))
-	v4 = round(v4, u64(b_110[24:32]))
-	b_78 = (*[78]byte)(b_110[32:])
+	{
+		b := b_110[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_78 = (*[78]byte)(b_110[32:])
+	}
 
 sz_78:
-	v1 = round(v1, u64(b_78[0:8]))
-	v2 = round(v2, u64(b_78[8:16]))
-	v3 = round(v3, u64(b_78[16:24]))
-	v4 = round(v4, u64(b_78[24:32]))
-	b_46 = (*[46]byte)(b_78[32:])
+	{
+		b := b_78[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_46 = (*[46]byte)(b_78[32:])
+	}
 
 sz_46:
-	v1 = round(v1, u64(b_46[0:8]))
-	v2 = round(v2, u64(b_46[8:16]))
-	v3 = round(v3, u64(b_46[16:24]))
-	v4 = round(v4, u64(b_46[24:32]))
-	b_14 = (*[14]byte)(b_46[32:])
+	{
+		b := b_46[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_14 = (*[14]byte)(b_46[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1125,25 +1665,55 @@ sz_14:
 	goto sz_14l
 
 sz_109:
-	v1 = round(v1, u64(b_109[0:8]))
-	v2 = round(v2, u64(b_109[8:16]))
-	v3 = round(v3, u64(b_109[16:24]))
-	v4 = round(v4, u64(b_109[24:32]))
-	b_77 = (*[77]byte)(b_109[32:])
+	{
+		b := b_109[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_77 = (*[77]byte)(b_109[32:])
+	}
 
 sz_77:
-	v1 = round(v1, u64(b_77[0:8]))
-	v2 = round(v2, u64(b_77[8:16]))
-	v3 = round(v3, u64(b_77[16:24]))
-	v4 = round(v4, u64(b_77[24:32]))
-	b_45 = (*[45]byte)(b_77[32:])
+	{
+		b := b_77[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_45 = (*[45]byte)(b_77[32:])
+	}
 
 sz_45:
-	v1 = round(v1, u64(b_45[0:8]))
-	v2 = round(v2, u64(b_45[8:16]))
-	v3 = round(v3, u64(b_45[16:24]))
-	v4 = round(v4, u64(b_45[24:32]))
-	b_13 = (*[13]byte)(b_45[32:])
+	{
+		b := b_45[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_13 = (*[13]byte)(b_45[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1156,25 +1726,55 @@ sz_13:
 	goto sz_13l
 
 sz_108:
-	v1 = round(v1, u64(b_108[0:8]))
-	v2 = round(v2, u64(b_108[8:16]))
-	v3 = round(v3, u64(b_108[16:24]))
-	v4 = round(v4, u64(b_108[24:32]))
-	b_76 = (*[76]byte)(b_108[32:])
+	{
+		b := b_108[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_76 = (*[76]byte)(b_108[32:])
+	}
 
 sz_76:
-	v1 = round(v1, u64(b_76[0:8]))
-	v2 = round(v2, u64(b_76[8:16]))
-	v3 = round(v3, u64(b_76[16:24]))
-	v4 = round(v4, u64(b_76[24:32]))
-	b_44 = (*[44]byte)(b_76[32:])
+	{
+		b := b_76[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_44 = (*[44]byte)(b_76[32:])
+	}
 
 sz_44:
-	v1 = round(v1, u64(b_44[0:8]))
-	v2 = round(v2, u64(b_44[8:16]))
-	v3 = round(v3, u64(b_44[16:24]))
-	v4 = round(v4, u64(b_44[24:32]))
-	b_12 = (*[12]byte)(b_44[32:])
+	{
+		b := b_44[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_12 = (*[12]byte)(b_44[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1187,25 +1787,55 @@ sz_12:
 	goto sz_12l
 
 sz_107:
-	v1 = round(v1, u64(b_107[0:8]))
-	v2 = round(v2, u64(b_107[8:16]))
-	v3 = round(v3, u64(b_107[16:24]))
-	v4 = round(v4, u64(b_107[24:32]))
-	b_75 = (*[75]byte)(b_107[32:])
+	{
+		b := b_107[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_75 = (*[75]byte)(b_107[32:])
+	}
 
 sz_75:
-	v1 = round(v1, u64(b_75[0:8]))
-	v2 = round(v2, u64(b_75[8:16]))
-	v3 = round(v3, u64(b_75[16:24]))
-	v4 = round(v4, u64(b_75[24:32]))
-	b_43 = (*[43]byte)(b_75[32:])
+	{
+		b := b_75[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_43 = (*[43]byte)(b_75[32:])
+	}
 
 sz_43:
-	v1 = round(v1, u64(b_43[0:8]))
-	v2 = round(v2, u64(b_43[8:16]))
-	v3 = round(v3, u64(b_43[16:24]))
-	v4 = round(v4, u64(b_43[24:32]))
-	b_11 = (*[11]byte)(b_43[32:])
+	{
+		b := b_43[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_11 = (*[11]byte)(b_43[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1218,25 +1848,55 @@ sz_11:
 	goto sz_11l
 
 sz_106:
-	v1 = round(v1, u64(b_106[0:8]))
-	v2 = round(v2, u64(b_106[8:16]))
-	v3 = round(v3, u64(b_106[16:24]))
-	v4 = round(v4, u64(b_106[24:32]))
-	b_74 = (*[74]byte)(b_106[32:])
+	{
+		b := b_106[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_74 = (*[74]byte)(b_106[32:])
+	}
 
 sz_74:
-	v1 = round(v1, u64(b_74[0:8]))
-	v2 = round(v2, u64(b_74[8:16]))
-	v3 = round(v3, u64(b_74[16:24]))
-	v4 = round(v4, u64(b_74[24:32]))
-	b_42 = (*[42]byte)(b_74[32:])
+	{
+		b := b_74[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_42 = (*[42]byte)(b_74[32:])
+	}
 
 sz_42:
-	v1 = round(v1, u64(b_42[0:8]))
-	v2 = round(v2, u64(b_42[8:16]))
-	v3 = round(v3, u64(b_42[16:24]))
-	v4 = round(v4, u64(b_42[24:32]))
-	b_10 = (*[10]byte)(b_42[32:])
+	{
+		b := b_42[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_10 = (*[10]byte)(b_42[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1249,25 +1909,55 @@ sz_10:
 	goto sz_10l
 
 sz_105:
-	v1 = round(v1, u64(b_105[0:8]))
-	v2 = round(v2, u64(b_105[8:16]))
-	v3 = round(v3, u64(b_105[16:24]))
-	v4 = round(v4, u64(b_105[24:32]))
-	b_73 = (*[73]byte)(b_105[32:])
+	{
+		b := b_105[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_73 = (*[73]byte)(b_105[32:])
+	}
 
 sz_73:
-	v1 = round(v1, u64(b_73[0:8]))
-	v2 = round(v2, u64(b_73[8:16]))
-	v3 = round(v3, u64(b_73[16:24]))
-	v4 = round(v4, u64(b_73[24:32]))
-	b_41 = (*[41]byte)(b_73[32:])
+	{
+		b := b_73[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_41 = (*[41]byte)(b_73[32:])
+	}
 
 sz_41:
-	v1 = round(v1, u64(b_41[0:8]))
-	v2 = round(v2, u64(b_41[8:16]))
-	v3 = round(v3, u64(b_41[16:24]))
-	v4 = round(v4, u64(b_41[24:32]))
-	b_9 = (*[9]byte)(b_41[32:])
+	{
+		b := b_41[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_9 = (*[9]byte)(b_41[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1280,25 +1970,55 @@ sz_9:
 	goto sz_9l
 
 sz_104:
-	v1 = round(v1, u64(b_104[0:8]))
-	v2 = round(v2, u64(b_104[8:16]))
-	v3 = round(v3, u64(b_104[16:24]))
-	v4 = round(v4, u64(b_104[24:32]))
-	b_72 = (*[72]byte)(b_104[32:])
+	{
+		b := b_104[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_72 = (*[72]byte)(b_104[32:])
+	}
 
 sz_72:
-	v1 = round(v1, u64(b_72[0:8]))
-	v2 = round(v2, u64(b_72[8:16]))
-	v3 = round(v3, u64(b_72[16:24]))
-	v4 = round(v4, u64(b_72[24:32]))
-	b_40 = (*[40]byte)(b_72[32:])
+	{
+		b := b_72[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_40 = (*[40]byte)(b_72[32:])
+	}
 
 sz_40:
-	v1 = round(v1, u64(b_40[0:8]))
-	v2 = round(v2, u64(b_40[8:16]))
-	v3 = round(v3, u64(b_40[16:24]))
-	v4 = round(v4, u64(b_40[24:32]))
-	b_8 = (*[8]byte)(b_40[32:])
+	{
+		b := b_40[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_8 = (*[8]byte)(b_40[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1311,25 +2031,55 @@ sz_8:
 	goto sz_8l
 
 sz_103:
-	v1 = round(v1, u64(b_103[0:8]))
-	v2 = round(v2, u64(b_103[8:16]))
-	v3 = round(v3, u64(b_103[16:24]))
-	v4 = round(v4, u64(b_103[24:32]))
-	b_71 = (*[71]byte)(b_103[32:])
+	{
+		b := b_103[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_71 = (*[71]byte)(b_103[32:])
+	}
 
 sz_71:
-	v1 = round(v1, u64(b_71[0:8]))
-	v2 = round(v2, u64(b_71[8:16]))
-	v3 = round(v3, u64(b_71[16:24]))
-	v4 = round(v4, u64(b_71[24:32]))
-	b_39 = (*[39]byte)(b_71[32:])
+	{
+		b := b_71[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_39 = (*[39]byte)(b_71[32:])
+	}
 
 sz_39:
-	v1 = round(v1, u64(b_39[0:8]))
-	v2 = round(v2, u64(b_39[8:16]))
-	v3 = round(v3, u64(b_39[16:24]))
-	v4 = round(v4, u64(b_39[24:32]))
-	b_7 = (*[7]byte)(b_39[32:])
+	{
+		b := b_39[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_7 = (*[7]byte)(b_39[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1342,25 +2092,55 @@ sz_7:
 	goto sz_7l
 
 sz_102:
-	v1 = round(v1, u64(b_102[0:8]))
-	v2 = round(v2, u64(b_102[8:16]))
-	v3 = round(v3, u64(b_102[16:24]))
-	v4 = round(v4, u64(b_102[24:32]))
-	b_70 = (*[70]byte)(b_102[32:])
+	{
+		b := b_102[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_70 = (*[70]byte)(b_102[32:])
+	}
 
 sz_70:
-	v1 = round(v1, u64(b_70[0:8]))
-	v2 = round(v2, u64(b_70[8:16]))
-	v3 = round(v3, u64(b_70[16:24]))
-	v4 = round(v4, u64(b_70[24:32]))
-	b_38 = (*[38]byte)(b_70[32:])
+	{
+		b := b_70[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_38 = (*[38]byte)(b_70[32:])
+	}
 
 sz_38:
-	v1 = round(v1, u64(b_38[0:8]))
-	v2 = round(v2, u64(b_38[8:16]))
-	v3 = round(v3, u64(b_38[16:24]))
-	v4 = round(v4, u64(b_38[24:32]))
-	b_6 = (*[6]byte)(b_38[32:])
+	{
+		b := b_38[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_6 = (*[6]byte)(b_38[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1373,25 +2153,55 @@ sz_6:
 	goto sz_6l
 
 sz_101:
-	v1 = round(v1, u64(b_101[0:8]))
-	v2 = round(v2, u64(b_101[8:16]))
-	v3 = round(v3, u64(b_101[16:24]))
-	v4 = round(v4, u64(b_101[24:32]))
-	b_69 = (*[69]byte)(b_101[32:])
+	{
+		b := b_101[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_69 = (*[69]byte)(b_101[32:])
+	}
 
 sz_69:
-	v1 = round(v1, u64(b_69[0:8]))
-	v2 = round(v2, u64(b_69[8:16]))
-	v3 = round(v3, u64(b_69[16:24]))
-	v4 = round(v4, u64(b_69[24:32]))
-	b_37 = (*[37]byte)(b_69[32:])
+	{
+		b := b_69[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_37 = (*[37]byte)(b_69[32:])
+	}
 
 sz_37:
-	v1 = round(v1, u64(b_37[0:8]))
-	v2 = round(v2, u64(b_37[8:16]))
-	v3 = round(v3, u64(b_37[16:24]))
-	v4 = round(v4, u64(b_37[24:32]))
-	b_5 = (*[5]byte)(b_37[32:])
+	{
+		b := b_37[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_5 = (*[5]byte)(b_37[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1404,25 +2214,55 @@ sz_5:
 	goto sz_5l
 
 sz_100:
-	v1 = round(v1, u64(b_100[0:8]))
-	v2 = round(v2, u64(b_100[8:16]))
-	v3 = round(v3, u64(b_100[16:24]))
-	v4 = round(v4, u64(b_100[24:32]))
-	b_68 = (*[68]byte)(b_100[32:])
+	{
+		b := b_100[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_68 = (*[68]byte)(b_100[32:])
+	}
 
 sz_68:
-	v1 = round(v1, u64(b_68[0:8]))
-	v2 = round(v2, u64(b_68[8:16]))
-	v3 = round(v3, u64(b_68[16:24]))
-	v4 = round(v4, u64(b_68[24:32]))
-	b_36 = (*[36]byte)(b_68[32:])
+	{
+		b := b_68[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_36 = (*[36]byte)(b_68[32:])
+	}
 
 sz_36:
-	v1 = round(v1, u64(b_36[0:8]))
-	v2 = round(v2, u64(b_36[8:16]))
-	v3 = round(v3, u64(b_36[16:24]))
-	v4 = round(v4, u64(b_36[24:32]))
-	b_4 = (*[4]byte)(b_36[32:])
+	{
+		b := b_36[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_4 = (*[4]byte)(b_36[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1435,25 +2275,55 @@ sz_4:
 	goto sz_4l
 
 sz_99:
-	v1 = round(v1, u64(b_99[0:8]))
-	v2 = round(v2, u64(b_99[8:16]))
-	v3 = round(v3, u64(b_99[16:24]))
-	v4 = round(v4, u64(b_99[24:32]))
-	b_67 = (*[67]byte)(b_99[32:])
+	{
+		b := b_99[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_67 = (*[67]byte)(b_99[32:])
+	}
 
 sz_67:
-	v1 = round(v1, u64(b_67[0:8]))
-	v2 = round(v2, u64(b_67[8:16]))
-	v3 = round(v3, u64(b_67[16:24]))
-	v4 = round(v4, u64(b_67[24:32]))
-	b_35 = (*[35]byte)(b_67[32:])
+	{
+		b := b_67[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_35 = (*[35]byte)(b_67[32:])
+	}
 
 sz_35:
-	v1 = round(v1, u64(b_35[0:8]))
-	v2 = round(v2, u64(b_35[8:16]))
-	v3 = round(v3, u64(b_35[16:24]))
-	v4 = round(v4, u64(b_35[24:32]))
-	b_3 = (*[3]byte)(b_35[32:])
+	{
+		b := b_35[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_3 = (*[3]byte)(b_35[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1466,25 +2336,55 @@ sz_3:
 	goto sz_3l
 
 sz_98:
-	v1 = round(v1, u64(b_98[0:8]))
-	v2 = round(v2, u64(b_98[8:16]))
-	v3 = round(v3, u64(b_98[16:24]))
-	v4 = round(v4, u64(b_98[24:32]))
-	b_66 = (*[66]byte)(b_98[32:])
+	{
+		b := b_98[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_66 = (*[66]byte)(b_98[32:])
+	}
 
 sz_66:
-	v1 = round(v1, u64(b_66[0:8]))
-	v2 = round(v2, u64(b_66[8:16]))
-	v3 = round(v3, u64(b_66[16:24]))
-	v4 = round(v4, u64(b_66[24:32]))
-	b_34 = (*[34]byte)(b_66[32:])
+	{
+		b := b_66[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_34 = (*[34]byte)(b_66[32:])
+	}
 
 sz_34:
-	v1 = round(v1, u64(b_34[0:8]))
-	v2 = round(v2, u64(b_34[8:16]))
-	v3 = round(v3, u64(b_34[16:24]))
-	v4 = round(v4, u64(b_34[24:32]))
-	b_2 = (*[2]byte)(b_34[32:])
+	{
+		b := b_34[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_2 = (*[2]byte)(b_34[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1497,25 +2397,55 @@ sz_2:
 	goto sz_2l
 
 sz_97:
-	v1 = round(v1, u64(b_97[0:8]))
-	v2 = round(v2, u64(b_97[8:16]))
-	v3 = round(v3, u64(b_97[16:24]))
-	v4 = round(v4, u64(b_97[24:32]))
-	b_65 = (*[65]byte)(b_97[32:])
+	{
+		b := b_97[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_65 = (*[65]byte)(b_97[32:])
+	}
 
 sz_65:
-	v1 = round(v1, u64(b_65[0:8]))
-	v2 = round(v2, u64(b_65[8:16]))
-	v3 = round(v3, u64(b_65[16:24]))
-	v4 = round(v4, u64(b_65[24:32]))
-	b_33 = (*[33]byte)(b_65[32:])
+	{
+		b := b_65[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_33 = (*[33]byte)(b_65[32:])
+	}
 
 sz_33:
-	v1 = round(v1, u64(b_33[0:8]))
-	v2 = round(v2, u64(b_33[8:16]))
-	v3 = round(v3, u64(b_33[16:24]))
-	v4 = round(v4, u64(b_33[24:32]))
-	b_1 = (*[1]byte)(b_33[32:])
+	{
+		b := b_33[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_1 = (*[1]byte)(b_33[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1528,25 +2458,55 @@ sz_1:
 	goto sz_1l
 
 sz_96:
-	v1 = round(v1, u64(b_96[0:8]))
-	v2 = round(v2, u64(b_96[8:16]))
-	v3 = round(v3, u64(b_96[16:24]))
-	v4 = round(v4, u64(b_96[24:32]))
-	b_64 = (*[64]byte)(b_96[32:])
+	{
+		b := b_96[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_64 = (*[64]byte)(b_96[32:])
+	}
 
 sz_64:
-	v1 = round(v1, u64(b_64[0:8]))
-	v2 = round(v2, u64(b_64[8:16]))
-	v3 = round(v3, u64(b_64[16:24]))
-	v4 = round(v4, u64(b_64[24:32]))
-	b_32 = (*[32]byte)(b_64[32:])
+	{
+		b := b_64[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_32 = (*[32]byte)(b_64[32:])
+	}
 
 sz_32:
-	v1 = round(v1, u64(b_32[0:8]))
-	v2 = round(v2, u64(b_32[8:16]))
-	v3 = round(v3, u64(b_32[16:24]))
-	v4 = round(v4, u64(b_32[24:32]))
-	b_0 = (*[0]byte)(b_32[32:])
+	{
+		b := b_32[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v1 = round(v1, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v2 = round(v2, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		b = b[8:]
+		v3 = round(v3, load)
+		load = uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		v4 = round(v4, load)
+		b_0 = (*[0]byte)(b_32[32:])
+	}
 
 	h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	h = mergeRound(h, v1)
@@ -1559,165 +2519,277 @@ sz_32:
 
 	// Theses are 8 bytes block trailing slides.
 sz_31l:
-	h ^= round(0, u64(b_31[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_23 = (*[23]byte)(b_31[8:])
+	{
+		b := b_31[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_23 = (*[23]byte)(b_31[8:])
+	}
 
 sz_23l:
-	h ^= round(0, u64(b_23[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_15 = (*[15]byte)(b_23[8:])
+	{
+		b := b_23[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_15 = (*[15]byte)(b_23[8:])
+	}
 
 sz_15l:
-	h ^= round(0, u64(b_15[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_7 = (*[7]byte)(b_15[8:])
+	{
+		b := b_15[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_7 = (*[7]byte)(b_15[8:])
+	}
 
 goto sz_7l
 
 sz_30l:
-	h ^= round(0, u64(b_30[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_22 = (*[22]byte)(b_30[8:])
+	{
+		b := b_30[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_22 = (*[22]byte)(b_30[8:])
+	}
 
 sz_22l:
-	h ^= round(0, u64(b_22[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_14 = (*[14]byte)(b_22[8:])
+	{
+		b := b_22[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_14 = (*[14]byte)(b_22[8:])
+	}
 
 sz_14l:
-	h ^= round(0, u64(b_14[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_6 = (*[6]byte)(b_14[8:])
+	{
+		b := b_14[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_6 = (*[6]byte)(b_14[8:])
+	}
 
 goto sz_6l
 
 sz_29l:
-	h ^= round(0, u64(b_29[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_21 = (*[21]byte)(b_29[8:])
+	{
+		b := b_29[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_21 = (*[21]byte)(b_29[8:])
+	}
 
 sz_21l:
-	h ^= round(0, u64(b_21[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_13 = (*[13]byte)(b_21[8:])
+	{
+		b := b_21[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_13 = (*[13]byte)(b_21[8:])
+	}
 
 sz_13l:
-	h ^= round(0, u64(b_13[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_5 = (*[5]byte)(b_13[8:])
+	{
+		b := b_13[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_5 = (*[5]byte)(b_13[8:])
+	}
 
 goto sz_5l
 
 sz_28l:
-	h ^= round(0, u64(b_28[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_20 = (*[20]byte)(b_28[8:])
+	{
+		b := b_28[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_20 = (*[20]byte)(b_28[8:])
+	}
 
 sz_20l:
-	h ^= round(0, u64(b_20[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_12 = (*[12]byte)(b_20[8:])
+	{
+		b := b_20[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_12 = (*[12]byte)(b_20[8:])
+	}
 
 sz_12l:
-	h ^= round(0, u64(b_12[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_4 = (*[4]byte)(b_12[8:])
+	{
+		b := b_12[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_4 = (*[4]byte)(b_12[8:])
+	}
 
 goto sz_4l
 
 sz_27l:
-	h ^= round(0, u64(b_27[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_19 = (*[19]byte)(b_27[8:])
+	{
+		b := b_27[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_19 = (*[19]byte)(b_27[8:])
+	}
 
 sz_19l:
-	h ^= round(0, u64(b_19[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_11 = (*[11]byte)(b_19[8:])
+	{
+		b := b_19[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_11 = (*[11]byte)(b_19[8:])
+	}
 
 sz_11l:
-	h ^= round(0, u64(b_11[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_3 = (*[3]byte)(b_11[8:])
+	{
+		b := b_11[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_3 = (*[3]byte)(b_11[8:])
+	}
 
 goto sz_3l
 
 sz_26l:
-	h ^= round(0, u64(b_26[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_18 = (*[18]byte)(b_26[8:])
+	{
+		b := b_26[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_18 = (*[18]byte)(b_26[8:])
+	}
 
 sz_18l:
-	h ^= round(0, u64(b_18[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_10 = (*[10]byte)(b_18[8:])
+	{
+		b := b_18[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_10 = (*[10]byte)(b_18[8:])
+	}
 
 sz_10l:
-	h ^= round(0, u64(b_10[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_2 = (*[2]byte)(b_10[8:])
+	{
+		b := b_10[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_2 = (*[2]byte)(b_10[8:])
+	}
 
 goto sz_2l
 
 sz_25l:
-	h ^= round(0, u64(b_25[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_17 = (*[17]byte)(b_25[8:])
+	{
+		b := b_25[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_17 = (*[17]byte)(b_25[8:])
+	}
 
 sz_17l:
-	h ^= round(0, u64(b_17[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_9 = (*[9]byte)(b_17[8:])
+	{
+		b := b_17[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_9 = (*[9]byte)(b_17[8:])
+	}
 
 sz_9l:
-	h ^= round(0, u64(b_9[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_1 = (*[1]byte)(b_9[8:])
+	{
+		b := b_9[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_1 = (*[1]byte)(b_9[8:])
+	}
 
 goto sz_1l
 
 sz_24l:
-	h ^= round(0, u64(b_24[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_16 = (*[16]byte)(b_24[8:])
+	{
+		b := b_24[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_16 = (*[16]byte)(b_24[8:])
+	}
 
 sz_16l:
-	h ^= round(0, u64(b_16[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_8 = (*[8]byte)(b_16[8:])
+	{
+		b := b_16[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_8 = (*[8]byte)(b_16[8:])
+	}
 
 sz_8l:
-	h ^= round(0, u64(b_8[:8]))
-	h = rol27(h)*prime1 + prime4
-	b_0 = (*[0]byte)(b_8[8:])
+	{
+		b := b_8[:]
+		load := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 | uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56 // Work around for go.dev/issue/68081.
+		h ^= round(0, load)
+		h = rol27(h)*prime1 + prime4
+		b_0 = (*[0]byte)(b_8[8:])
+	}
 
 goto sz_0l
 
 	// Theses are the 4 bytes trailing slides.
 sz_7l:
-	h ^= uint64(u32(b_7[:4])) * prime1
-	h = rol23(h)*prime2 + prime3
-	b_3 = (*[3]byte)(b_7[4:])
-	goto sz_3l
+	{
+		b := b_7[:]
+		load := uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24 // Work around for go.dev/issue/68081.
+		h ^= uint64(load) * prime1
+		h = rol23(h)*prime2 + prime3
+		b_3 = (*[3]byte)(b_7[4:])
+		goto sz_3l
+	}
 
 sz_6l:
-	h ^= uint64(u32(b_6[:4])) * prime1
-	h = rol23(h)*prime2 + prime3
-	b_2 = (*[2]byte)(b_6[4:])
-	goto sz_2l
+	{
+		b := b_6[:]
+		load := uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24 // Work around for go.dev/issue/68081.
+		h ^= uint64(load) * prime1
+		h = rol23(h)*prime2 + prime3
+		b_2 = (*[2]byte)(b_6[4:])
+		goto sz_2l
+	}
 
 sz_5l:
-	h ^= uint64(u32(b_5[:4])) * prime1
-	h = rol23(h)*prime2 + prime3
-	b_1 = (*[1]byte)(b_5[4:])
-	goto sz_1l
+	{
+		b := b_5[:]
+		load := uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24 // Work around for go.dev/issue/68081.
+		h ^= uint64(load) * prime1
+		h = rol23(h)*prime2 + prime3
+		b_1 = (*[1]byte)(b_5[4:])
+		goto sz_1l
+	}
 
 sz_4l:
-	h ^= uint64(u32(b_4[:4])) * prime1
-	h = rol23(h)*prime2 + prime3
-	b_0 = (*[0]byte)(b_4[4:])
-	goto sz_0l
+	{
+		b := b_4[:]
+		load := uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24 // Work around for go.dev/issue/68081.
+		h ^= uint64(load) * prime1
+		h = rol23(h)*prime2 + prime3
+		b_0 = (*[0]byte)(b_4[4:])
+		goto sz_0l
+	}
 
 	// This is the 1 bytes trailing slide.
 sz_3l:
