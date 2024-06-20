@@ -193,6 +193,7 @@ sz_0l:
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 	_, err = w.WriteTo(f)
 	if err != nil {
 		os.Remove(path)
