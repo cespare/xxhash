@@ -55,14 +55,12 @@ func slide(b []byte) uint64 {
 
 	// The go compiler has multiple oversight in the propragation of proofs through Phi nodes. Using array pointers is a very unsubtle hint and compiles to nothing.
 	// Because we assume the compiler has some low level SSA passes this is otherwise free.
-	var (
 `, sumSlideSize, sumSlideSize)
 	for i := 0; i <= sumSlideSize; i++ {
-		fmt.Fprintf(w, "\t\tb_%d *[%d]byte\n", i, i)
+		fmt.Fprintf(w, "\tvar b_%d *[%d]byte\n", i, i)
 	}
 
-	w.WriteString(`	)
-
+	w.WriteString(`
 	// Jump table to various positions in the slide, this setups proofs for bounds checks.
 	// From then on it need to make sure to maintain constance in the length of b.
 	switch len(b) {
@@ -104,7 +102,7 @@ func slide(b []byte) uint64 {
 `, load64)
 				genRound(w, 2, fmt.Sprintf("v%d", r), "load")
 			}
-			fmt.Fprintf(w, `b_%d = (*[%d]byte)(b_%d[32:])
+			fmt.Fprintf(w, `		b_%d = (*[%d]byte)(b_%d[32:])
 	}
 
 `, i-32, i-32, i)
@@ -138,14 +136,14 @@ func slide(b []byte) uint64 {
 		var temp uint64
 `, i, i, load64)
 			genRound(w, 2, "temp", "load")
-			fmt.Fprintf(w, `h ^= temp
+			fmt.Fprintf(w, `		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_%d = (*[%d]byte)(b_%d[8:])
 	}
 
 `, i-8, i-8, i)
 		}
-		fmt.Fprintf(w, `goto sz_%dl
+		fmt.Fprintf(w, `	goto sz_%dl
 
 `, i)
 	}

@@ -40,136 +40,134 @@ func slide(b []byte) uint64 {
 
 	// The go compiler has multiple oversight in the propragation of proofs through Phi nodes. Using array pointers is a very unsubtle hint and compiles to nothing.
 	// Because we assume the compiler has some low level SSA passes this is otherwise free.
-	var (
-		b_0 *[0]byte
-		b_1 *[1]byte
-		b_2 *[2]byte
-		b_3 *[3]byte
-		b_4 *[4]byte
-		b_5 *[5]byte
-		b_6 *[6]byte
-		b_7 *[7]byte
-		b_8 *[8]byte
-		b_9 *[9]byte
-		b_10 *[10]byte
-		b_11 *[11]byte
-		b_12 *[12]byte
-		b_13 *[13]byte
-		b_14 *[14]byte
-		b_15 *[15]byte
-		b_16 *[16]byte
-		b_17 *[17]byte
-		b_18 *[18]byte
-		b_19 *[19]byte
-		b_20 *[20]byte
-		b_21 *[21]byte
-		b_22 *[22]byte
-		b_23 *[23]byte
-		b_24 *[24]byte
-		b_25 *[25]byte
-		b_26 *[26]byte
-		b_27 *[27]byte
-		b_28 *[28]byte
-		b_29 *[29]byte
-		b_30 *[30]byte
-		b_31 *[31]byte
-		b_32 *[32]byte
-		b_33 *[33]byte
-		b_34 *[34]byte
-		b_35 *[35]byte
-		b_36 *[36]byte
-		b_37 *[37]byte
-		b_38 *[38]byte
-		b_39 *[39]byte
-		b_40 *[40]byte
-		b_41 *[41]byte
-		b_42 *[42]byte
-		b_43 *[43]byte
-		b_44 *[44]byte
-		b_45 *[45]byte
-		b_46 *[46]byte
-		b_47 *[47]byte
-		b_48 *[48]byte
-		b_49 *[49]byte
-		b_50 *[50]byte
-		b_51 *[51]byte
-		b_52 *[52]byte
-		b_53 *[53]byte
-		b_54 *[54]byte
-		b_55 *[55]byte
-		b_56 *[56]byte
-		b_57 *[57]byte
-		b_58 *[58]byte
-		b_59 *[59]byte
-		b_60 *[60]byte
-		b_61 *[61]byte
-		b_62 *[62]byte
-		b_63 *[63]byte
-		b_64 *[64]byte
-		b_65 *[65]byte
-		b_66 *[66]byte
-		b_67 *[67]byte
-		b_68 *[68]byte
-		b_69 *[69]byte
-		b_70 *[70]byte
-		b_71 *[71]byte
-		b_72 *[72]byte
-		b_73 *[73]byte
-		b_74 *[74]byte
-		b_75 *[75]byte
-		b_76 *[76]byte
-		b_77 *[77]byte
-		b_78 *[78]byte
-		b_79 *[79]byte
-		b_80 *[80]byte
-		b_81 *[81]byte
-		b_82 *[82]byte
-		b_83 *[83]byte
-		b_84 *[84]byte
-		b_85 *[85]byte
-		b_86 *[86]byte
-		b_87 *[87]byte
-		b_88 *[88]byte
-		b_89 *[89]byte
-		b_90 *[90]byte
-		b_91 *[91]byte
-		b_92 *[92]byte
-		b_93 *[93]byte
-		b_94 *[94]byte
-		b_95 *[95]byte
-		b_96 *[96]byte
-		b_97 *[97]byte
-		b_98 *[98]byte
-		b_99 *[99]byte
-		b_100 *[100]byte
-		b_101 *[101]byte
-		b_102 *[102]byte
-		b_103 *[103]byte
-		b_104 *[104]byte
-		b_105 *[105]byte
-		b_106 *[106]byte
-		b_107 *[107]byte
-		b_108 *[108]byte
-		b_109 *[109]byte
-		b_110 *[110]byte
-		b_111 *[111]byte
-		b_112 *[112]byte
-		b_113 *[113]byte
-		b_114 *[114]byte
-		b_115 *[115]byte
-		b_116 *[116]byte
-		b_117 *[117]byte
-		b_118 *[118]byte
-		b_119 *[119]byte
-		b_120 *[120]byte
-		b_121 *[121]byte
-		b_122 *[122]byte
-		b_123 *[123]byte
-		b_124 *[124]byte
-		b_125 *[125]byte
-		b_126 *[126]byte
-		b_127 *[127]byte
-	)
+	var b_0 *[0]byte
+	var b_1 *[1]byte
+	var b_2 *[2]byte
+	var b_3 *[3]byte
+	var b_4 *[4]byte
+	var b_5 *[5]byte
+	var b_6 *[6]byte
+	var b_7 *[7]byte
+	var b_8 *[8]byte
+	var b_9 *[9]byte
+	var b_10 *[10]byte
+	var b_11 *[11]byte
+	var b_12 *[12]byte
+	var b_13 *[13]byte
+	var b_14 *[14]byte
+	var b_15 *[15]byte
+	var b_16 *[16]byte
+	var b_17 *[17]byte
+	var b_18 *[18]byte
+	var b_19 *[19]byte
+	var b_20 *[20]byte
+	var b_21 *[21]byte
+	var b_22 *[22]byte
+	var b_23 *[23]byte
+	var b_24 *[24]byte
+	var b_25 *[25]byte
+	var b_26 *[26]byte
+	var b_27 *[27]byte
+	var b_28 *[28]byte
+	var b_29 *[29]byte
+	var b_30 *[30]byte
+	var b_31 *[31]byte
+	var b_32 *[32]byte
+	var b_33 *[33]byte
+	var b_34 *[34]byte
+	var b_35 *[35]byte
+	var b_36 *[36]byte
+	var b_37 *[37]byte
+	var b_38 *[38]byte
+	var b_39 *[39]byte
+	var b_40 *[40]byte
+	var b_41 *[41]byte
+	var b_42 *[42]byte
+	var b_43 *[43]byte
+	var b_44 *[44]byte
+	var b_45 *[45]byte
+	var b_46 *[46]byte
+	var b_47 *[47]byte
+	var b_48 *[48]byte
+	var b_49 *[49]byte
+	var b_50 *[50]byte
+	var b_51 *[51]byte
+	var b_52 *[52]byte
+	var b_53 *[53]byte
+	var b_54 *[54]byte
+	var b_55 *[55]byte
+	var b_56 *[56]byte
+	var b_57 *[57]byte
+	var b_58 *[58]byte
+	var b_59 *[59]byte
+	var b_60 *[60]byte
+	var b_61 *[61]byte
+	var b_62 *[62]byte
+	var b_63 *[63]byte
+	var b_64 *[64]byte
+	var b_65 *[65]byte
+	var b_66 *[66]byte
+	var b_67 *[67]byte
+	var b_68 *[68]byte
+	var b_69 *[69]byte
+	var b_70 *[70]byte
+	var b_71 *[71]byte
+	var b_72 *[72]byte
+	var b_73 *[73]byte
+	var b_74 *[74]byte
+	var b_75 *[75]byte
+	var b_76 *[76]byte
+	var b_77 *[77]byte
+	var b_78 *[78]byte
+	var b_79 *[79]byte
+	var b_80 *[80]byte
+	var b_81 *[81]byte
+	var b_82 *[82]byte
+	var b_83 *[83]byte
+	var b_84 *[84]byte
+	var b_85 *[85]byte
+	var b_86 *[86]byte
+	var b_87 *[87]byte
+	var b_88 *[88]byte
+	var b_89 *[89]byte
+	var b_90 *[90]byte
+	var b_91 *[91]byte
+	var b_92 *[92]byte
+	var b_93 *[93]byte
+	var b_94 *[94]byte
+	var b_95 *[95]byte
+	var b_96 *[96]byte
+	var b_97 *[97]byte
+	var b_98 *[98]byte
+	var b_99 *[99]byte
+	var b_100 *[100]byte
+	var b_101 *[101]byte
+	var b_102 *[102]byte
+	var b_103 *[103]byte
+	var b_104 *[104]byte
+	var b_105 *[105]byte
+	var b_106 *[106]byte
+	var b_107 *[107]byte
+	var b_108 *[108]byte
+	var b_109 *[109]byte
+	var b_110 *[110]byte
+	var b_111 *[111]byte
+	var b_112 *[112]byte
+	var b_113 *[113]byte
+	var b_114 *[114]byte
+	var b_115 *[115]byte
+	var b_116 *[116]byte
+	var b_117 *[117]byte
+	var b_118 *[118]byte
+	var b_119 *[119]byte
+	var b_120 *[120]byte
+	var b_121 *[121]byte
+	var b_122 *[122]byte
+	var b_123 *[123]byte
+	var b_124 *[124]byte
+	var b_125 *[125]byte
+	var b_126 *[126]byte
+	var b_127 *[127]byte
 
 	// Jump table to various positions in the slide, this setups proofs for bounds checks.
 	// From then on it need to make sure to maintain constance in the length of b.
@@ -593,7 +591,7 @@ sz_127:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_95 = (*[95]byte)(b_127[32:])
+		b_95 = (*[95]byte)(b_127[32:])
 	}
 
 sz_95:
@@ -620,7 +618,7 @@ sz_95:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_63 = (*[63]byte)(b_95[32:])
+		b_63 = (*[63]byte)(b_95[32:])
 	}
 
 sz_63:
@@ -647,7 +645,7 @@ sz_63:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_31 = (*[31]byte)(b_63[32:])
+		b_31 = (*[31]byte)(b_63[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -712,7 +710,7 @@ sz_126:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_94 = (*[94]byte)(b_126[32:])
+		b_94 = (*[94]byte)(b_126[32:])
 	}
 
 sz_94:
@@ -739,7 +737,7 @@ sz_94:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_62 = (*[62]byte)(b_94[32:])
+		b_62 = (*[62]byte)(b_94[32:])
 	}
 
 sz_62:
@@ -766,7 +764,7 @@ sz_62:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_30 = (*[30]byte)(b_62[32:])
+		b_30 = (*[30]byte)(b_62[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -831,7 +829,7 @@ sz_125:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_93 = (*[93]byte)(b_125[32:])
+		b_93 = (*[93]byte)(b_125[32:])
 	}
 
 sz_93:
@@ -858,7 +856,7 @@ sz_93:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_61 = (*[61]byte)(b_93[32:])
+		b_61 = (*[61]byte)(b_93[32:])
 	}
 
 sz_61:
@@ -885,7 +883,7 @@ sz_61:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_29 = (*[29]byte)(b_61[32:])
+		b_29 = (*[29]byte)(b_61[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -950,7 +948,7 @@ sz_124:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_92 = (*[92]byte)(b_124[32:])
+		b_92 = (*[92]byte)(b_124[32:])
 	}
 
 sz_92:
@@ -977,7 +975,7 @@ sz_92:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_60 = (*[60]byte)(b_92[32:])
+		b_60 = (*[60]byte)(b_92[32:])
 	}
 
 sz_60:
@@ -1004,7 +1002,7 @@ sz_60:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_28 = (*[28]byte)(b_60[32:])
+		b_28 = (*[28]byte)(b_60[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -1069,7 +1067,7 @@ sz_123:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_91 = (*[91]byte)(b_123[32:])
+		b_91 = (*[91]byte)(b_123[32:])
 	}
 
 sz_91:
@@ -1096,7 +1094,7 @@ sz_91:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_59 = (*[59]byte)(b_91[32:])
+		b_59 = (*[59]byte)(b_91[32:])
 	}
 
 sz_59:
@@ -1123,7 +1121,7 @@ sz_59:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_27 = (*[27]byte)(b_59[32:])
+		b_27 = (*[27]byte)(b_59[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -1188,7 +1186,7 @@ sz_122:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_90 = (*[90]byte)(b_122[32:])
+		b_90 = (*[90]byte)(b_122[32:])
 	}
 
 sz_90:
@@ -1215,7 +1213,7 @@ sz_90:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_58 = (*[58]byte)(b_90[32:])
+		b_58 = (*[58]byte)(b_90[32:])
 	}
 
 sz_58:
@@ -1242,7 +1240,7 @@ sz_58:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_26 = (*[26]byte)(b_58[32:])
+		b_26 = (*[26]byte)(b_58[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -1307,7 +1305,7 @@ sz_121:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_89 = (*[89]byte)(b_121[32:])
+		b_89 = (*[89]byte)(b_121[32:])
 	}
 
 sz_89:
@@ -1334,7 +1332,7 @@ sz_89:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_57 = (*[57]byte)(b_89[32:])
+		b_57 = (*[57]byte)(b_89[32:])
 	}
 
 sz_57:
@@ -1361,7 +1359,7 @@ sz_57:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_25 = (*[25]byte)(b_57[32:])
+		b_25 = (*[25]byte)(b_57[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -1426,7 +1424,7 @@ sz_120:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_88 = (*[88]byte)(b_120[32:])
+		b_88 = (*[88]byte)(b_120[32:])
 	}
 
 sz_88:
@@ -1453,7 +1451,7 @@ sz_88:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_56 = (*[56]byte)(b_88[32:])
+		b_56 = (*[56]byte)(b_88[32:])
 	}
 
 sz_56:
@@ -1480,7 +1478,7 @@ sz_56:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_24 = (*[24]byte)(b_56[32:])
+		b_24 = (*[24]byte)(b_56[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -1545,7 +1543,7 @@ sz_119:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_87 = (*[87]byte)(b_119[32:])
+		b_87 = (*[87]byte)(b_119[32:])
 	}
 
 sz_87:
@@ -1572,7 +1570,7 @@ sz_87:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_55 = (*[55]byte)(b_87[32:])
+		b_55 = (*[55]byte)(b_87[32:])
 	}
 
 sz_55:
@@ -1599,7 +1597,7 @@ sz_55:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_23 = (*[23]byte)(b_55[32:])
+		b_23 = (*[23]byte)(b_55[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -1664,7 +1662,7 @@ sz_118:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_86 = (*[86]byte)(b_118[32:])
+		b_86 = (*[86]byte)(b_118[32:])
 	}
 
 sz_86:
@@ -1691,7 +1689,7 @@ sz_86:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_54 = (*[54]byte)(b_86[32:])
+		b_54 = (*[54]byte)(b_86[32:])
 	}
 
 sz_54:
@@ -1718,7 +1716,7 @@ sz_54:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_22 = (*[22]byte)(b_54[32:])
+		b_22 = (*[22]byte)(b_54[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -1783,7 +1781,7 @@ sz_117:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_85 = (*[85]byte)(b_117[32:])
+		b_85 = (*[85]byte)(b_117[32:])
 	}
 
 sz_85:
@@ -1810,7 +1808,7 @@ sz_85:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_53 = (*[53]byte)(b_85[32:])
+		b_53 = (*[53]byte)(b_85[32:])
 	}
 
 sz_53:
@@ -1837,7 +1835,7 @@ sz_53:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_21 = (*[21]byte)(b_53[32:])
+		b_21 = (*[21]byte)(b_53[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -1902,7 +1900,7 @@ sz_116:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_84 = (*[84]byte)(b_116[32:])
+		b_84 = (*[84]byte)(b_116[32:])
 	}
 
 sz_84:
@@ -1929,7 +1927,7 @@ sz_84:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_52 = (*[52]byte)(b_84[32:])
+		b_52 = (*[52]byte)(b_84[32:])
 	}
 
 sz_52:
@@ -1956,7 +1954,7 @@ sz_52:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_20 = (*[20]byte)(b_52[32:])
+		b_20 = (*[20]byte)(b_52[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -2021,7 +2019,7 @@ sz_115:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_83 = (*[83]byte)(b_115[32:])
+		b_83 = (*[83]byte)(b_115[32:])
 	}
 
 sz_83:
@@ -2048,7 +2046,7 @@ sz_83:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_51 = (*[51]byte)(b_83[32:])
+		b_51 = (*[51]byte)(b_83[32:])
 	}
 
 sz_51:
@@ -2075,7 +2073,7 @@ sz_51:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_19 = (*[19]byte)(b_51[32:])
+		b_19 = (*[19]byte)(b_51[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -2140,7 +2138,7 @@ sz_114:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_82 = (*[82]byte)(b_114[32:])
+		b_82 = (*[82]byte)(b_114[32:])
 	}
 
 sz_82:
@@ -2167,7 +2165,7 @@ sz_82:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_50 = (*[50]byte)(b_82[32:])
+		b_50 = (*[50]byte)(b_82[32:])
 	}
 
 sz_50:
@@ -2194,7 +2192,7 @@ sz_50:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_18 = (*[18]byte)(b_50[32:])
+		b_18 = (*[18]byte)(b_50[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -2259,7 +2257,7 @@ sz_113:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_81 = (*[81]byte)(b_113[32:])
+		b_81 = (*[81]byte)(b_113[32:])
 	}
 
 sz_81:
@@ -2286,7 +2284,7 @@ sz_81:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_49 = (*[49]byte)(b_81[32:])
+		b_49 = (*[49]byte)(b_81[32:])
 	}
 
 sz_49:
@@ -2313,7 +2311,7 @@ sz_49:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_17 = (*[17]byte)(b_49[32:])
+		b_17 = (*[17]byte)(b_49[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -2378,7 +2376,7 @@ sz_112:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_80 = (*[80]byte)(b_112[32:])
+		b_80 = (*[80]byte)(b_112[32:])
 	}
 
 sz_80:
@@ -2405,7 +2403,7 @@ sz_80:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_48 = (*[48]byte)(b_80[32:])
+		b_48 = (*[48]byte)(b_80[32:])
 	}
 
 sz_48:
@@ -2432,7 +2430,7 @@ sz_48:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_16 = (*[16]byte)(b_48[32:])
+		b_16 = (*[16]byte)(b_48[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -2497,7 +2495,7 @@ sz_111:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_79 = (*[79]byte)(b_111[32:])
+		b_79 = (*[79]byte)(b_111[32:])
 	}
 
 sz_79:
@@ -2524,7 +2522,7 @@ sz_79:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_47 = (*[47]byte)(b_79[32:])
+		b_47 = (*[47]byte)(b_79[32:])
 	}
 
 sz_47:
@@ -2551,7 +2549,7 @@ sz_47:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_15 = (*[15]byte)(b_47[32:])
+		b_15 = (*[15]byte)(b_47[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -2616,7 +2614,7 @@ sz_110:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_78 = (*[78]byte)(b_110[32:])
+		b_78 = (*[78]byte)(b_110[32:])
 	}
 
 sz_78:
@@ -2643,7 +2641,7 @@ sz_78:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_46 = (*[46]byte)(b_78[32:])
+		b_46 = (*[46]byte)(b_78[32:])
 	}
 
 sz_46:
@@ -2670,7 +2668,7 @@ sz_46:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_14 = (*[14]byte)(b_46[32:])
+		b_14 = (*[14]byte)(b_46[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -2735,7 +2733,7 @@ sz_109:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_77 = (*[77]byte)(b_109[32:])
+		b_77 = (*[77]byte)(b_109[32:])
 	}
 
 sz_77:
@@ -2762,7 +2760,7 @@ sz_77:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_45 = (*[45]byte)(b_77[32:])
+		b_45 = (*[45]byte)(b_77[32:])
 	}
 
 sz_45:
@@ -2789,7 +2787,7 @@ sz_45:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_13 = (*[13]byte)(b_45[32:])
+		b_13 = (*[13]byte)(b_45[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -2854,7 +2852,7 @@ sz_108:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_76 = (*[76]byte)(b_108[32:])
+		b_76 = (*[76]byte)(b_108[32:])
 	}
 
 sz_76:
@@ -2881,7 +2879,7 @@ sz_76:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_44 = (*[44]byte)(b_76[32:])
+		b_44 = (*[44]byte)(b_76[32:])
 	}
 
 sz_44:
@@ -2908,7 +2906,7 @@ sz_44:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_12 = (*[12]byte)(b_44[32:])
+		b_12 = (*[12]byte)(b_44[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -2973,7 +2971,7 @@ sz_107:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_75 = (*[75]byte)(b_107[32:])
+		b_75 = (*[75]byte)(b_107[32:])
 	}
 
 sz_75:
@@ -3000,7 +2998,7 @@ sz_75:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_43 = (*[43]byte)(b_75[32:])
+		b_43 = (*[43]byte)(b_75[32:])
 	}
 
 sz_43:
@@ -3027,7 +3025,7 @@ sz_43:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_11 = (*[11]byte)(b_43[32:])
+		b_11 = (*[11]byte)(b_43[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -3092,7 +3090,7 @@ sz_106:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_74 = (*[74]byte)(b_106[32:])
+		b_74 = (*[74]byte)(b_106[32:])
 	}
 
 sz_74:
@@ -3119,7 +3117,7 @@ sz_74:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_42 = (*[42]byte)(b_74[32:])
+		b_42 = (*[42]byte)(b_74[32:])
 	}
 
 sz_42:
@@ -3146,7 +3144,7 @@ sz_42:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_10 = (*[10]byte)(b_42[32:])
+		b_10 = (*[10]byte)(b_42[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -3211,7 +3209,7 @@ sz_105:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_73 = (*[73]byte)(b_105[32:])
+		b_73 = (*[73]byte)(b_105[32:])
 	}
 
 sz_73:
@@ -3238,7 +3236,7 @@ sz_73:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_41 = (*[41]byte)(b_73[32:])
+		b_41 = (*[41]byte)(b_73[32:])
 	}
 
 sz_41:
@@ -3265,7 +3263,7 @@ sz_41:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_9 = (*[9]byte)(b_41[32:])
+		b_9 = (*[9]byte)(b_41[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -3330,7 +3328,7 @@ sz_104:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_72 = (*[72]byte)(b_104[32:])
+		b_72 = (*[72]byte)(b_104[32:])
 	}
 
 sz_72:
@@ -3357,7 +3355,7 @@ sz_72:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_40 = (*[40]byte)(b_72[32:])
+		b_40 = (*[40]byte)(b_72[32:])
 	}
 
 sz_40:
@@ -3384,7 +3382,7 @@ sz_40:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_8 = (*[8]byte)(b_40[32:])
+		b_8 = (*[8]byte)(b_40[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -3449,7 +3447,7 @@ sz_103:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_71 = (*[71]byte)(b_103[32:])
+		b_71 = (*[71]byte)(b_103[32:])
 	}
 
 sz_71:
@@ -3476,7 +3474,7 @@ sz_71:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_39 = (*[39]byte)(b_71[32:])
+		b_39 = (*[39]byte)(b_71[32:])
 	}
 
 sz_39:
@@ -3503,7 +3501,7 @@ sz_39:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_7 = (*[7]byte)(b_39[32:])
+		b_7 = (*[7]byte)(b_39[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -3568,7 +3566,7 @@ sz_102:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_70 = (*[70]byte)(b_102[32:])
+		b_70 = (*[70]byte)(b_102[32:])
 	}
 
 sz_70:
@@ -3595,7 +3593,7 @@ sz_70:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_38 = (*[38]byte)(b_70[32:])
+		b_38 = (*[38]byte)(b_70[32:])
 	}
 
 sz_38:
@@ -3622,7 +3620,7 @@ sz_38:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_6 = (*[6]byte)(b_38[32:])
+		b_6 = (*[6]byte)(b_38[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -3687,7 +3685,7 @@ sz_101:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_69 = (*[69]byte)(b_101[32:])
+		b_69 = (*[69]byte)(b_101[32:])
 	}
 
 sz_69:
@@ -3714,7 +3712,7 @@ sz_69:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_37 = (*[37]byte)(b_69[32:])
+		b_37 = (*[37]byte)(b_69[32:])
 	}
 
 sz_37:
@@ -3741,7 +3739,7 @@ sz_37:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_5 = (*[5]byte)(b_37[32:])
+		b_5 = (*[5]byte)(b_37[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -3806,7 +3804,7 @@ sz_100:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_68 = (*[68]byte)(b_100[32:])
+		b_68 = (*[68]byte)(b_100[32:])
 	}
 
 sz_68:
@@ -3833,7 +3831,7 @@ sz_68:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_36 = (*[36]byte)(b_68[32:])
+		b_36 = (*[36]byte)(b_68[32:])
 	}
 
 sz_36:
@@ -3860,7 +3858,7 @@ sz_36:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_4 = (*[4]byte)(b_36[32:])
+		b_4 = (*[4]byte)(b_36[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -3925,7 +3923,7 @@ sz_99:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_67 = (*[67]byte)(b_99[32:])
+		b_67 = (*[67]byte)(b_99[32:])
 	}
 
 sz_67:
@@ -3952,7 +3950,7 @@ sz_67:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_35 = (*[35]byte)(b_67[32:])
+		b_35 = (*[35]byte)(b_67[32:])
 	}
 
 sz_35:
@@ -3979,7 +3977,7 @@ sz_35:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_3 = (*[3]byte)(b_35[32:])
+		b_3 = (*[3]byte)(b_35[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -4044,7 +4042,7 @@ sz_98:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_66 = (*[66]byte)(b_98[32:])
+		b_66 = (*[66]byte)(b_98[32:])
 	}
 
 sz_66:
@@ -4071,7 +4069,7 @@ sz_66:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_34 = (*[34]byte)(b_66[32:])
+		b_34 = (*[34]byte)(b_66[32:])
 	}
 
 sz_34:
@@ -4098,7 +4096,7 @@ sz_34:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_2 = (*[2]byte)(b_34[32:])
+		b_2 = (*[2]byte)(b_34[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -4163,7 +4161,7 @@ sz_97:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_65 = (*[65]byte)(b_97[32:])
+		b_65 = (*[65]byte)(b_97[32:])
 	}
 
 sz_65:
@@ -4190,7 +4188,7 @@ sz_65:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_33 = (*[33]byte)(b_65[32:])
+		b_33 = (*[33]byte)(b_65[32:])
 	}
 
 sz_33:
@@ -4217,7 +4215,7 @@ sz_33:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_1 = (*[1]byte)(b_33[32:])
+		b_1 = (*[1]byte)(b_33[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -4282,7 +4280,7 @@ sz_96:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_64 = (*[64]byte)(b_96[32:])
+		b_64 = (*[64]byte)(b_96[32:])
 	}
 
 sz_64:
@@ -4309,7 +4307,7 @@ sz_64:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_32 = (*[32]byte)(b_64[32:])
+		b_32 = (*[32]byte)(b_64[32:])
 	}
 
 sz_32:
@@ -4336,7 +4334,7 @@ sz_32:
 		v4 += load * prime2
 		v4 = bits.RotateLeft64(v4, 31)
 		v4 *= prime1
-b_0 = (*[0]byte)(b_32[32:])
+		b_0 = (*[0]byte)(b_32[32:])
 	}
 
 	h = bits.RotateLeft64(v1, 1) + bits.RotateLeft64(v2, 7) + bits.RotateLeft64(v3, 12) + bits.RotateLeft64(v4, 18)
@@ -4385,7 +4383,7 @@ sz_31l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_23 = (*[23]byte)(b_31[8:])
 	}
@@ -4398,7 +4396,7 @@ sz_23l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_15 = (*[15]byte)(b_23[8:])
 	}
@@ -4411,12 +4409,12 @@ sz_15l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_7 = (*[7]byte)(b_15[8:])
 	}
 
-goto sz_7l
+	goto sz_7l
 
 sz_30l:
 	{
@@ -4426,7 +4424,7 @@ sz_30l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_22 = (*[22]byte)(b_30[8:])
 	}
@@ -4439,7 +4437,7 @@ sz_22l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_14 = (*[14]byte)(b_22[8:])
 	}
@@ -4452,12 +4450,12 @@ sz_14l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_6 = (*[6]byte)(b_14[8:])
 	}
 
-goto sz_6l
+	goto sz_6l
 
 sz_29l:
 	{
@@ -4467,7 +4465,7 @@ sz_29l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_21 = (*[21]byte)(b_29[8:])
 	}
@@ -4480,7 +4478,7 @@ sz_21l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_13 = (*[13]byte)(b_21[8:])
 	}
@@ -4493,12 +4491,12 @@ sz_13l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_5 = (*[5]byte)(b_13[8:])
 	}
 
-goto sz_5l
+	goto sz_5l
 
 sz_28l:
 	{
@@ -4508,7 +4506,7 @@ sz_28l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_20 = (*[20]byte)(b_28[8:])
 	}
@@ -4521,7 +4519,7 @@ sz_20l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_12 = (*[12]byte)(b_20[8:])
 	}
@@ -4534,12 +4532,12 @@ sz_12l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_4 = (*[4]byte)(b_12[8:])
 	}
 
-goto sz_4l
+	goto sz_4l
 
 sz_27l:
 	{
@@ -4549,7 +4547,7 @@ sz_27l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_19 = (*[19]byte)(b_27[8:])
 	}
@@ -4562,7 +4560,7 @@ sz_19l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_11 = (*[11]byte)(b_19[8:])
 	}
@@ -4575,12 +4573,12 @@ sz_11l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_3 = (*[3]byte)(b_11[8:])
 	}
 
-goto sz_3l
+	goto sz_3l
 
 sz_26l:
 	{
@@ -4590,7 +4588,7 @@ sz_26l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_18 = (*[18]byte)(b_26[8:])
 	}
@@ -4603,7 +4601,7 @@ sz_18l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_10 = (*[10]byte)(b_18[8:])
 	}
@@ -4616,12 +4614,12 @@ sz_10l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_2 = (*[2]byte)(b_10[8:])
 	}
 
-goto sz_2l
+	goto sz_2l
 
 sz_25l:
 	{
@@ -4631,7 +4629,7 @@ sz_25l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_17 = (*[17]byte)(b_25[8:])
 	}
@@ -4644,7 +4642,7 @@ sz_17l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_9 = (*[9]byte)(b_17[8:])
 	}
@@ -4657,12 +4655,12 @@ sz_9l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_1 = (*[1]byte)(b_9[8:])
 	}
 
-goto sz_1l
+	goto sz_1l
 
 sz_24l:
 	{
@@ -4672,7 +4670,7 @@ sz_24l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_16 = (*[16]byte)(b_24[8:])
 	}
@@ -4685,7 +4683,7 @@ sz_16l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_8 = (*[8]byte)(b_16[8:])
 	}
@@ -4698,12 +4696,12 @@ sz_8l:
 		temp += load * prime2
 		temp = bits.RotateLeft64(temp, 31)
 		temp *= prime1
-h ^= temp
+		h ^= temp
 		h = bits.RotateLeft64(h, 27)*prime1 + prime4
 		b_0 = (*[0]byte)(b_8[8:])
 	}
 
-goto sz_0l
+	goto sz_0l
 
 	// Theses are the 4 bytes trailing slides.
 sz_7l:
