@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/cespare/xxhash/v2"
 	. "github.com/mmcloughlin/avo/build"
 	. "github.com/mmcloughlin/avo/operand"
@@ -243,10 +241,7 @@ func writeBlocks() {
 	RET()
 }
 
-func main() {
-	if err := os.Chdir(".."); err != nil {
-		panic(err)
-	}
+func avx512() {
 	sum64()
 	writeBlocks()
 	Generate()

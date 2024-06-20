@@ -24,6 +24,9 @@ var useAvx512 = cpuid.CPU.Supports(
 
 // Sum64 computes the 64-bit xxHash digest of b with a zero seed.
 func Sum64(b []byte) uint64 {
+	if len(b) <= slideLength {
+		return slide(b)
+	}
 	if useAvx512 {
 		return sum64Avx512(b)
 	}
