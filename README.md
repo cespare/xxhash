@@ -28,7 +28,7 @@ The package is written with optimized pure Go and also contains even faster
 assembly implementations for amd64 and arm64. If desired, the `purego` build tag
 opts into using the Go code even on those architectures.
 
-[xxHash]: http://cyan4973.github.io/xxHash/
+[xxHash]: https://xxhash.com/
 
 ## Compatibility
 

@@ -1,5 +1,5 @@
 // Package xxhash implements the 64-bit variant of xxHash (XXH64) as described
-// at http://cyan4973.github.io/xxHash/.
+// at https://xxhash.com/.
 package xxhash
 
 import (
