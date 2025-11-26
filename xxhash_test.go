@@ -190,6 +190,23 @@ func TestAllocs(t *testing.T) {
 	})
 }
 
+func TestCopy(t *testing.T) {
+	want := Sum64String("abcdef")
+
+	d0 := New()
+	d0.WriteString("abc")
+	d1 := d0.Copy()
+	d0.WriteString("def")
+	d1.WriteString("def")
+
+	if got := d0.Sum64(); got != want {
+		t.Fatalf("hashing with original Digest, got 0x%x; want 0x%x", got, want)
+	}
+	if got := d1.Sum64(); got != want {
+		t.Fatalf("hashing with copied Digest, got 0x%x; want 0x%x", got, want)
+	}
+}
+
 func testAllocs(t *testing.T, fn func()) {
 	t.Helper()
 	if allocs := int(testing.AllocsPerRun(10, fn)); allocs > 0 {
