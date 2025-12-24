@@ -207,3 +207,83 @@ TEXT ·writeBlocks(SB), NOSPLIT|NOFRAME, $0-40
 	MOVQ p, ret+32(FP)
 
 	RET
+
+// func BatchSum64String(src []string, dst []uint64) int64
+TEXT ·BatchSum64String(SB), NOSPLIT, $32-56
+	// param size: 56 bytes
+	// stack size: 32 bytes
+	#define StringCount R8
+	#define DstCount R9
+	#define Src R10
+	#define PreFetchIndex R11
+	#define Current R12
+	#define CurrentData R13
+	#define Dst R14
+	#define CurrentIndex R15
+	//
+	MOVQ src_cnt+8(FP), StringCount
+	MOVQ dst_cnt+32(FP), DstCount
+	// check param
+	CMPQ StringCount, DstCount
+	JNE err_cnt
+	CMPQ StringCount, $0
+	JE err_cnt
+	CMPQ StringCount, $1
+	JE only_one
+	//
+	XORQ CurrentIndex, CurrentIndex
+	MOVQ src_ptr+0(FP), Src
+loop_each_string:
+	// ready to pre load next string to L1 cache
+	LEAQ -2(StringCount), PreFetchIndex
+	CMPQ CurrentIndex, PreFetchIndex  // if CurrentIndex>(StringCount-2) then goto `after_prefetch`
+	JGT after_prefetch
+	// do prefetch
+	LEAQ 1(CurrentIndex), PreFetchIndex
+	SHLQ $4, PreFetchIndex. // PreFetchIndex = (CurrentIndex + 1) * 16
+	LEAQ +0(Src)(PreFetchIndex*1), PreFetchIndex
+	// After comparing PREFETCHNTA/PREFETCHT0/PREFETCHT1/PREFETCHT2, PREFETCHNTA showed the best acceleration effect.
+	PREFETCHNTA (PreFetchIndex)
+after_prefetch:
+	// load string pointer
+	MOVQ CurrentIndex, Current
+	SHLQ $4, Current  // current_string = CurrentIndex * 16
+	LEAQ +0(Src)(Current*1), Current
+	// I tried using VMOVDQU to reduce the number of load instructions, but actual testing showed it to be a negative optimization.
+	MOVQ (Current), CurrentData
+	MOVQ CurrentData, 0(SP)  // ptr
+	MOVQ +8(Current), CurrentData
+	MOVQ CurrentData, 8(SP)  // len, no need to set cap
+	// 
+    CALL ·Sum64(SB)
+    // get return value
+    MOVQ 24(SP), CurrentData
+	// reload register
+	MOVQ src_ptr+0(FP), Src
+	MOVQ src_cnt+8(FP), StringCount
+	MOVQ dst_ptr+24(FP), Dst
+    // write result
+	MOVQ CurrentData, (Dst)(CurrentIndex*8)
+	// set counter
+	ADDQ $1, CurrentIndex
+	CMPQ CurrentIndex, StringCount
+	JLT loop_each_string
+
+success:
+	MOVQ StringCount, ret+48(FP)
+	RET
+err_cnt:
+	MOVQ $0, ret+48(FP)
+	RET
+only_one:
+	MOVQ src_ptr+0(FP), R8
+	MOVQ (R8), R13
+    MOVQ R13, 0(SP)  // ptr
+	MOVQ +8(R8), R13
+	MOVQ R13, 8(SP)  // length, no need to set cap
+	CALL ·Sum64(SB)
+	MOVQ 24(SP), R13
+	MOVQ dst_ptr+24(FP), R10
+	MOVQ R13, (R10)
+	MOVQ $1, ret+48(FP)
+	RET

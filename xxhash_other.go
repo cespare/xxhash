@@ -74,3 +74,13 @@ func writeBlocks(d *Digest, b []byte) int {
 	d.v1, d.v2, d.v3, d.v4 = v1, v2, v3, v4
 	return n - len(b)
 }
+
+func BatchSum64String(src []string, dst []uint64) int64 {
+	if len(src) != len(dst) {
+		return 0
+	}
+	for i := 0; i < len(src); i++ {
+		dst[i] = Sum64String(src[i])
+	}
+	return int64(len(src))
+}
