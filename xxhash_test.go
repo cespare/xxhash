@@ -5,8 +5,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"math/rand"
 	"strings"
 	"testing"
+	"unsafe"
 )
 
 func TestAll(t *testing.T) {
@@ -194,5 +196,46 @@ func testAllocs(t *testing.T, fn func()) {
 	t.Helper()
 	if allocs := int(testing.AllocsPerRun(10, fn)); allocs > 0 {
 		t.Fatalf("got %d allocation(s) (want zero)", allocs)
+	}
+}
+
+func genString(l int) string {
+	s := make([]byte, l)
+	for i := 0; i < l; i++ {
+		s[i] = (byte)(rand.Intn(127-32) + 32)
+	}
+	sh := *(*sliceHeader)(unsafe.Pointer(&s))
+	return sh.s
+}
+
+func shuffleStrings(a []string) {
+	rand.Shuffle(len(a), func(i, j int) {
+		a[i], a[j] = a[j], a[i]
+	})
+}
+
+func TestBatchSum64String(t *testing.T) {
+	const cnt = 1000
+	arr := make([]string, cnt)
+	var bytes int64
+	for i := 0; i < len(arr); i++ {
+		arr[i] = genString(i)
+		bytes += int64(i)
+	}
+	shuffleStrings(arr)
+	out := make([]uint64, len(arr))
+	//
+	ret := BatchSum64String(arr, out)
+	if ret != int64(len(arr)) {
+		t.Error("BatchSum64String fail")
+		return
+	}
+	//
+	for j := 0; j < len(arr); j++ {
+		hash := Sum64String(arr[j])
+		if hash != out[j] {
+			t.Error("not equal:", j)
+			return
+		}
 	}
 }

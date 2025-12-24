@@ -73,3 +73,36 @@ func BenchmarkDigestString(b *testing.B) {
 		})
 	}
 }
+
+func BenchmarkBatchSum64String(b *testing.B) {
+	const cnt = 30000 // 400mb data
+	arr := make([]string, cnt)
+	var bytes int64
+	for i := 0; i < len(arr); i++ {
+		arr[i] = genString(i)
+		bytes += int64(i)
+	}
+	out := make([]uint64, len(arr))
+	b.Run("prefetch version:", func(b *testing.B) {
+		b.SetBytes(bytes)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			b.StopTimer()
+			shuffleStrings(arr)
+			b.StartTimer()
+			_ = BatchSum64String(arr, out)
+		}
+	})
+	b.Run("normal version:", func(b *testing.B) {
+		b.SetBytes(bytes)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			b.StopTimer()
+			shuffleStrings(arr)
+			b.StartTimer()
+			for j := 0; j < len(arr); j++ {
+				out[j] = Sum64String(arr[j])
+			}
+		}
+	})
+}

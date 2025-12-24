@@ -1,8 +1,5 @@
-//go:build (amd64 || arm64) && !appengine && gc && !purego
-// +build amd64 arm64
-// +build !appengine
-// +build gc
-// +build !purego
+//go:build amd64 && !appengine && gc && !purego
+// +build amd64,!appengine,gc,!purego
 
 package xxhash
 
@@ -13,3 +10,6 @@ func Sum64(b []byte) uint64
 
 //go:noescape
 func writeBlocks(d *Digest, b []byte) int
+
+//go:noescape
+func BatchSum64String(src []string, dst []uint64) int64
