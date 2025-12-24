@@ -240,7 +240,7 @@ loop_each_string:
 	JGT after_prefetch
 	// do prefetch
 	LEAQ 1(CurrentIndex), PreFetchIndex
-	SHLQ $4, PreFetchIndex. // PreFetchIndex = (CurrentIndex + 1) * 16
+	SHLQ $4, PreFetchIndex // PreFetchIndex = (CurrentIndex + 1) * 16
 	LEAQ +0(Src)(PreFetchIndex*1), PreFetchIndex
 	// After comparing PREFETCHNTA/PREFETCHT0/PREFETCHT1/PREFETCHT2, PREFETCHNTA showed the best acceleration effect.
 	PREFETCHNTA (PreFetchIndex)
