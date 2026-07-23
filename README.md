@@ -24,6 +24,10 @@ func (*Digest) WriteString(string) (int, error)
 func (*Digest) Sum64() uint64
 ```
 
+**Note:** a zero-valued `Digest` is not initialized. Call `New()` (or `Reset()` /
+`ResetWithSeed`) before writing, especially if you embed `Digest` in another
+struct (#65).
+
 The package is written with optimized pure Go and also contains even faster
 assembly implementations for amd64 and arm64. If desired, the `purego` build tag
 opts into using the Go code even on those architectures.
