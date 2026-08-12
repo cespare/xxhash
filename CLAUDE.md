@@ -66,6 +66,13 @@ Whatever the harness, sweep the input's address before believing a result:
 the buffer's stores and the input's loads 4K-alias each other, so one address
 is one draw from that lottery rather than a measurement of the change.
 
+None of that was needed on an M2 under macOS, where there is no `taskset` and
+none was wanted: repeated `-count 8` runs moved by well under 1%, so plain
+`benchstat` of one build against another was enough to see 3%. To read a result
+in cycles per 32-byte block rather than MB/s you need the clock, which `sysctl`
+won't give you on Apple silicon: time a long chain of dependent `ADD`s, which
+retires one per cycle. An M2 performance core is ~3.44 GHz.
+
 Useful when working on the Go paths:
 
 ```bash
@@ -124,9 +131,15 @@ instruction by instruction to keep the ports balanced. AVX2 synthesizes the
 (DQ+VL — 512-bit buys nothing here and costs frequency on some parts).
 
 The remaining accumulator chain is add, rotate, multiply: 1+1+3 = 5 cycles per
-32-byte block, and that is the floor for XXH64 on one stream. Measured on Zen 4
-the vector loops sit at about 5.1-5.3, so there is only a few percent left in
-the block loop itself; the scalar loop's eight multiplies put it at 8.
+32-byte block, and that is the floor here. Measured on Zen 4 the vector loops sit
+at about 5.1-5.3, so there is only a few percent left in the block loop itself;
+the scalar loop's eight multiplies put it at 8.
+
+Five is the floor for x86 specifically, because x86 has no integer multiply-add.
+The arm64 section below gets to four with one, by carrying `acc + x*prime2`
+across the loop instead of `acc`, which folds the add into the multiply. There
+is no way to spell that here: `LEA` doesn't multiply by `prime1`, and the
+add has to happen after the rotate.
 
 Things that will bite you when editing this file:
 
@@ -177,9 +190,52 @@ Tried on Zen 4 and rejected, so as not to be tried again without a reason:
 - **`PCALIGN $64` on the loop heads** (16% slower), and **`PREFETCHT0`** ahead of
   the loop (slower past L2).
 
-arm64 is intentionally untouched by the vectorization work: NEON has no 64x64
-multiply, and the existing `MADD`-based loop was tuned on real hardware. qemu
-gives correctness, not timing, so don't "optimize" it blind.
+## arm64 assembly
+
+`xxhash_arm64.s` is scalar throughout — one `blockLoop`, no vector path, no
+feature detection. The block loop is bounded by accumulator latency rather than
+by multiply throughput, so the work went into the shape of the round instead.
+
+The round is carried half-rotated. Substituting `u = acc + x*prime2`, so that
+`acc = rol31(u_prev) * prime1`, turns
+
+    acc = rol31(acc + x*prime2) * prime1
+
+into
+
+    u = rol31(u_prev) * prime1 + x*prime2
+
+which is a rotate and a `MADD` — a four-cycle chain, against seven for the
+straightforward `MADD`/rotate/multiply and five if you only split the `MADD` in
+two. `preRound` establishes `u` for the first block, `round` carries it, and
+`finishRound` converts back; `blockLoop` peels the first block and finishes
+after the last, so the per-block instruction count is unchanged. Measured on an
+Apple M2: +64% at 64KB, +59% at 4KB, +20% at 256 bytes, +3% at 64, and a wash at
+32, where the peel and the finish are the whole loop. (That last case is why
+`preRound` is a `MADD` and `round` is not — see the comment on it.)
+
+**Don't add a NEON block loop.** This was built and measured, not assumed:
+NEON has no integer multiply of any width in Go's assembler (`VPMULL` is
+carry-less), but the 64x64 can be synthesized in eight ops per block from
+`UZP1`/`UZP2`, a 32-bit `MUL`/`MLA` for the cross term, `ZIP1`/`ZIP2` against
+zero to place it (`USHLL` cannot shift a 32-bit element by 32), and
+`UMLAL`/`UMLAL2`. A complete pipelined version of that, mirroring the amd64
+group-buffer design, ran **5-27% slower** than the scalar loop at every length
+that reached it, at group sizes 2, 4 and 8 blocks. The reason is structural:
+Apple cores retire one `MADD` per cycle, so the four per block need four cycles
+on their own — exactly the length of the chain. The input multiplies are not the
+constraint, so moving them off the integer pipes buys nothing and the vector
+half's extra ~20 uops per block displace `MADD` issue. This is the opposite of
+amd64, where a single 1/cycle `IMUL` port *is* the constraint, which is why the
+vector loops pay off there.
+
+If you do revisit it: hand-assembled instructions go in as `WORD $0x...`, and
+`go tool objdump` decodes them (unlike the AVX case above), so the annotations
+can be checked against the built package.
+
+Other arm64 cores were not measured — qemu gives correctness, not timing, so
+don't "optimize" it blind. The carried round should be a win anywhere `MADD`
+latency is at least that of `MUL`, but the NEON result above is an Apple result.
 
 ## Testing
 

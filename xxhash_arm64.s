@@ -25,10 +25,49 @@
 #define x3	R22
 #define x4	R23
 
+// The block loop is bounded by the latency of the four accumulator chains and
+// by nothing else, so a round is worth spelling out in whatever way makes one
+// link of that chain shortest. Written directly, a round is
+//
+//	acc = rol31(acc + x*prime2) * prime1
+//
+// and as a MADD, a rotate and a multiply that is multiply-add (3 cycles),
+// rotate (1), multiply (3): seven cycles per block.
+//
+// x*prime2 depends only on the input, so it need not be on the chain at all.
+// Splitting the MADD into a separate multiply and add leaves add, rotate,
+// multiply -- five cycles, with the multiply free to run many blocks ahead.
+//
+// The add comes off too, by carrying the loop rotated by half a round.
+// Substituting u = acc + x*prime2, so that acc = rol31(u_prev) * prime1,
+//
+//	u = rol31(u_prev) * prime1 + x*prime2
+//
+// which is a rotate and a MADD: four cycles, with nothing left on the chain
+// that isn't part of the hash. preRound puts the accumulators into u for the
+// first block, round carries them, and finishRound converts them back.
+//
+// Four cycles is also what the four MADDs need on their own: Apple cores
+// retire one MADD per cycle (against two plain multiplies), so the chain and
+// the multiply pipelines saturate together. See the note in CLAUDE.md on why
+// there is no NEON block loop here -- the input multiplies are not the
+// constraint, so moving them to the vector units buys nothing.
 #define round(acc, x) \
-	MADD prime2, acc, x, acc \
-	ROR  $64-31, acc         \
-	MUL  prime1, acc
+	MUL  prime2, x         \
+	ROR  $64-31, acc       \
+	MADD prime1, x, acc, acc
+
+// preRound folds the first block into acc, leaving it in the carried form that
+// round expects. This one runs once rather than per block, so unlike round it
+// wants the MADD: there is no loop here for the multiply to run ahead of, and
+// fusing it is both a cycle and an instruction cheaper.
+#define preRound(acc, x) \
+	MADD prime2, acc, x, acc
+
+// finishRound converts the carried form back into the accumulator itself.
+#define finishRound(acc) \
+	ROR $64-31, acc \
+	MUL prime1, acc
 
 // round0 performs the operation x = round(0, x).
 #define round0(x) \
@@ -43,8 +82,20 @@
 
 // blockLoop processes as many 32-byte blocks as possible,
 // updating v1, v2, v3, and v4. It assumes that n >= 32.
+//
+// The first block is peeled off to put the accumulators into the form round
+// carries, and the last rotate and multiply are done once at the end rather
+// than once per block.
 #define blockLoop() \
 	LSR     $5, n, nblocks  \
+	LDP.P   16(p), (x1, x2) \
+	LDP.P   16(p), (x3, x4) \
+	preRound(v1, x1)        \
+	preRound(v2, x2)        \
+	preRound(v3, x3)        \
+	preRound(v4, x4)        \
+	SUB     $1, nblocks     \
+	CBZ     nblocks, blocksDone \
 	PCALIGN $16             \
 	loop:                   \
 	LDP.P   16(p), (x1, x2) \
@@ -54,7 +105,12 @@
 	round(v3, x3)           \
 	round(v4, x4)           \
 	SUB     $1, nblocks     \
-	CBNZ    nblocks, loop
+	CBNZ    nblocks, loop   \
+	blocksDone:             \
+	finishRound(v1)         \
+	finishRound(v2)         \
+	finishRound(v3)         \
+	finishRound(v4)
 
 // func Sum64(b []byte) uint64
 TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
