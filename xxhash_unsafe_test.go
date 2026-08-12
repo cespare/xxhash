@@ -4,6 +4,7 @@
 package xxhash
 
 import (
+	"os"
 	"os/exec"
 	"sort"
 	"strings"
@@ -34,7 +35,10 @@ func TestInlining(t *testing.T) {
 		"(*Digest).WriteString": {},
 	}
 
-	cmd := exec.Command("go", "test", "-gcflags=-m", "-run", "xxxx")
+	// Build rather than test: the inlining decisions are all we need, and
+	// building doesn't run anything, so this still works when the test itself
+	// is running under an emulator for another GOARCH.
+	cmd := exec.Command("go", "build", "-gcflags=-m", "-o", os.DevNull, ".")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Log(string(out))

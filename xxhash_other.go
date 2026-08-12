@@ -15,10 +15,10 @@ func Sum64(b []byte) uint64 {
 	var h uint64
 
 	if n >= 32 {
-		v1 := primes[0] + prime2
+		v1 := initV1
 		v2 := prime2
 		v3 := uint64(0)
-		v4 := -primes[0]
+		v4 := initV4
 		for len(b) >= 32 {
 			v1 = round(v1, u64(b[0:8:len(b)]))
 			v2 = round(v2, u64(b[8:16:len(b)]))
@@ -37,18 +37,26 @@ func Sum64(b []byte) uint64 {
 
 	h += uint64(n)
 
-	for ; len(b) >= 8; b = b[8:] {
-		k1 := round(0, u64(b[:8]))
-		h ^= k1
-		h = rol27(h)*prime1 + prime4
+	// The remaining bytes, fewer than 32 of them, are folded in without a
+	// loop: reslicing costs several instructions each time around, since the
+	// compiler has to keep the data pointer from moving past the end of the
+	// slice, and there are at most three 8-byte rounds to do.
+	if len(b) >= 16 {
+		h = tailRound8(h, u64(b[0:8]))
+		h = tailRound8(h, u64(b[8:16]))
+		b = b[16:len(b):len(b)]
+	}
+	if len(b) >= 8 {
+		h = tailRound8(h, u64(b[0:8]))
+		b = b[8:len(b):len(b)]
 	}
 	if len(b) >= 4 {
-		h ^= uint64(u32(b[:4])) * prime1
+		h ^= uint64(u32(b[0:4])) * prime1
 		h = rol23(h)*prime2 + prime3
-		b = b[4:]
+		b = b[4:len(b):len(b)]
 	}
-	for ; len(b) > 0; b = b[1:] {
-		h ^= uint64(b[0]) * prime5
+	for _, c := range b {
+		h ^= uint64(c) * prime5
 		h = rol11(h) * prime1
 	}
 

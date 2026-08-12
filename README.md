@@ -28,6 +28,13 @@ The package is written with optimized pure Go and also contains even faster
 assembly implementations for amd64 and arm64. If desired, the `purego` build tag
 opts into using the Go code even on those architectures.
 
+On amd64, long inputs additionally use a vectorized block loop, selected at
+startup from the CPU's features: AVX2, or AVX512 (F+DQ+VL) where available.
+XXH64's block loop is a serial chain of 64-bit multiplies, so the vector units
+don't run it directly; they precompute the half of each round that depends only
+on the input, which takes the scalar half off the CPU's single 64-bit multiply
+port. Short inputs are unaffected and still take the scalar path.
+
 [xxHash]: https://xxhash.com/
 
 ## Compatibility
@@ -49,19 +56,24 @@ implementations of Sum64.
 
 | input size | purego    | asm       |
 | ---------- | --------- | --------- |
-| 4 B        |  1.3 GB/s |  1.2 GB/s |
-| 16 B       |  2.9 GB/s |  3.5 GB/s |
-| 100 B      |  6.9 GB/s |  8.1 GB/s |
-| 4 KB       | 11.7 GB/s | 16.7 GB/s |
-| 10 MB      | 12.0 GB/s | 17.3 GB/s |
+| 4 B        |  2.3 GB/s |  2.3 GB/s |
+| 16 B       |  6.2 GB/s |  7.7 GB/s |
+| 100 B      | 11.0 GB/s | 12.0 GB/s |
+| 4 KB       | 18.2 GB/s | 26.9 GB/s |
+| 10 MB      | 17.8 GB/s | 26.7 GB/s |
 
-These numbers were generated on Ubuntu 20.04 with an Intel Xeon Platinum 8252C
-CPU using the following commands under Go 1.19.2:
+These numbers were generated on Ubuntu 26.04 with an Intel Core Ultra 9 185H CPU
+(which has AVX2 but not AVX512) using the following commands under Go 1.26.5:
 
 ```
 benchstat <(go test -tags purego -benchtime 500ms -count 15 -bench 'Sum64$')
 benchstat <(go test -benchtime 500ms -count 15 -bench 'Sum64$')
 ```
+
+Earlier numbers, measured on an Intel Xeon Platinum 8252C under Go 1.19.2 before
+the vectorized block loop, were 11.7 GB/s (purego) and 16.7 GB/s (asm) at 4 KB.
+Both machines and both Go versions differ, so those are not directly comparable;
+on this machine the same benchmark went from 19.0 to 26.9 GB/s.
 
 ## Projects using this package
 

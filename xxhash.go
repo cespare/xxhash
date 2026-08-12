@@ -16,6 +16,17 @@ const (
 	prime5 uint64 = 2870177450012600261
 )
 
+// The initial values of the first and fourth accumulators, prime1+prime2 and
+// -prime1, both wrap around. Go rejects a constant expression that overflows
+// its type, so they're spelled here in a roundabout way that keeps every
+// intermediate representable, which lets them be used as immediates rather than
+// being recomputed from the primes at run time. TestInitConstants checks them
+// against the wrapping arithmetic they stand for.
+const (
+	initV1 = prime1 - (^prime2 + 1) // prime1 + prime2
+	initV4 = ^prime1 + 1            // -prime1
+)
+
 // Store the primes in an array as well.
 //
 // The consts are used when possible in Go code to avoid MOVs but we need a
@@ -57,10 +68,10 @@ func (d *Digest) Reset() {
 // ResetWithSeed clears the Digest's state so that it can be reused.
 // It uses the given seed to initialize the state.
 func (d *Digest) ResetWithSeed(seed uint64) {
-	d.v1 = seed + prime1 + prime2
+	d.v1 = seed + initV1
 	d.v2 = seed + prime2
 	d.v3 = seed
-	d.v4 = seed - prime1
+	d.v4 = seed + initV4
 	d.total = 0
 	d.n = 0
 }
@@ -142,19 +153,25 @@ func (d *Digest) Sum64() uint64 {
 
 	h += d.total
 
+	// The buffered remainder is at most 31 bytes, so it is folded in with a
+	// fixed sequence of tests rather than a loop.
 	b := d.mem[:d.n&(len(d.mem)-1)]
-	for ; len(b) >= 8; b = b[8:] {
-		k1 := round(0, u64(b[:8]))
-		h ^= k1
-		h = rol27(h)*prime1 + prime4
+	if len(b) >= 16 {
+		h = tailRound8(h, u64(b[0:8]))
+		h = tailRound8(h, u64(b[8:16]))
+		b = b[16:]
+	}
+	if len(b) >= 8 {
+		h = tailRound8(h, u64(b[0:8]))
+		b = b[8:]
 	}
 	if len(b) >= 4 {
-		h ^= uint64(u32(b[:4])) * prime1
+		h ^= uint64(u32(b[0:4])) * prime1
 		h = rol23(h)*prime2 + prime3
 		b = b[4:]
 	}
-	for ; len(b) > 0; b = b[1:] {
-		h ^= uint64(b[0]) * prime5
+	for _, c := range b {
+		h ^= uint64(c) * prime5
 		h = rol11(h) * prime1
 	}
 
@@ -224,6 +241,13 @@ func round(acc, input uint64) uint64 {
 	acc = rol31(acc)
 	acc *= prime1
 	return acc
+}
+
+// tailRound8 folds the 8 bytes x into h. It is the round applied to the last
+// whole 8-byte groups of the input, after the 32-byte blocks are done.
+func tailRound8(h, x uint64) uint64 {
+	h ^= round(0, x)
+	return rol27(h)*prime1 + prime4
 }
 
 func mergeRound(acc, val uint64) uint64 {
