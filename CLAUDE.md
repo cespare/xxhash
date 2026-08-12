@@ -107,6 +107,16 @@ block of constants to load).
 written in a roundabout but constant-foldable way; `TestInitConstants` checks
 them against the real arithmetic. Don't "simplify" them back.
 
+`Write` moves writes of up to 8 bytes into the block buffer itself instead of
+calling `copy`, and that shouldn't be simplified back either: `copy` of a length
+the compiler doesn't know is a call to `runtime.memmove`, and on a path that
+short the call costs more than the move — it also forces the receiver and the
+length to be spilled around it. It is worth 12% of a stream of 8-byte writes and 30% of `Digest` on
+4 bytes (`BenchmarkDigestChunks`, `BenchmarkDigestBytes/4B`). Longer writes are
+left to `memmove`, which by 16 bytes is already down to a couple of SSE moves;
+both open-coding those lengths and merely testing for the short case one branch
+later measured worse.
+
 ## amd64 assembly
 
 `xxhash_amd64.s` has four entry points. `Sum64` and `writeBlocks` are frameless

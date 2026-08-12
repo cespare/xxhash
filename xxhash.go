@@ -89,6 +89,37 @@ func (d *Digest) Write(b []byte) (n int, err error) {
 
 	memleft := d.mem[d.n&(len(d.mem)-1):]
 
+	// A write of a word or less that doesn't fill the current block is the
+	// common case for a streaming caller, and there copy is most of the cost:
+	// it compiles to a call to runtime.memmove for a length the compiler
+	// doesn't know, and the call drags in spilling and reloading the receiver
+	// and the length around it, on a path that otherwise touches only
+	// registers. Moving the bytes here instead leaves it call-free, which is
+	// worth 12% of a stream of 8-byte writes and 30% of Digest on 4 bytes. The
+	// 4-to-7 case writes the front and the back of b, which at that length
+	// overlap in the middle and so cover all of it.
+	//
+	// Longer writes are left alone deliberately. From 16 bytes up memmove is
+	// already down to a couple of SSE moves, and open-coding those lengths
+	// measured slower; folding the test into the block below instead of putting
+	// it here, where everything longer falls straight past it into the original
+	// code, cost more on the block path than it gained.
+	if n <= 8 && d.n+n < 32 {
+		switch {
+		case n == 8:
+			putU64(memleft[0:8], u64(b[0:8]))
+		case n >= 4:
+			putU32(memleft[0:4], u32(b[0:4]))
+			putU32(memleft[n-4:], u32(b[n-4:]))
+		default:
+			for i, c := range b {
+				memleft[i] = c
+			}
+		}
+		d.n += n
+		return
+	}
+
 	if d.n+n < 32 {
 		// This new data doesn't even fill the current block.
 		copy(memleft, b)
@@ -235,6 +266,9 @@ func consumeUint64(b []byte) ([]byte, uint64) {
 
 func u64(b []byte) uint64 { return binary.LittleEndian.Uint64(b) }
 func u32(b []byte) uint32 { return binary.LittleEndian.Uint32(b) }
+
+func putU64(b []byte, x uint64) { binary.LittleEndian.PutUint64(b, x) }
+func putU32(b []byte, x uint32) { binary.LittleEndian.PutUint32(b, x) }
 
 func round(acc, input uint64) uint64 {
 	acc += input * prime2

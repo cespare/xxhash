@@ -1,6 +1,7 @@
 package xxhash
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -55,6 +56,34 @@ func BenchmarkDigestBytes(b *testing.B) {
 				h := New()
 				h.Write(in)
 				_ = h.Sum64()
+			}
+		})
+	}
+}
+
+// BenchmarkDigestChunks feeds a fixed amount of data to a Digest in small
+// pieces. Writes that don't fill out the 32-byte block are the common case for
+// a streaming caller, and they take a different path through Write than the
+// single large write the benchmarks above measure.
+func BenchmarkDigestChunks(b *testing.B) {
+	const n = 1024
+	in := make([]byte, n)
+	for i := range in {
+		in[i] = byte(i)
+	}
+	for _, chunk := range []int{1, 4, 8, 16, 24, 32} {
+		b.Run(fmt.Sprint(chunk), func(b *testing.B) {
+			b.SetBytes(n)
+			for i := 0; i < b.N; i++ {
+				h := New()
+				for j := 0; j < n; j += chunk {
+					end := j + chunk
+					if end > n {
+						end = n
+					}
+					h.Write(in[j:end])
+				}
+				sink = h.Sum64()
 			}
 		})
 	}
