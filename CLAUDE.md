@@ -305,9 +305,10 @@ latency is at least that of `MUL`, but the NEON result above is an Apple result.
 ## The pure-Go block loops
 
 `xxhash_other.go` carries the same rearrangement, in `preRound`/`carryRound`/
-`finishRound`. It is worth having there because that file is what arm64 compiles
-to under `purego` or `appengine`, and what every architecture without assembly
-gets: on an M2, `Sum64` goes +29% at 4KB and +36% at 64KB.
+`finishRound`. It went in there because that file is what arm64 compiles to
+under `purego` or `appengine`, and what every architecture without assembly
+gets: on an M2, `Sum64` goes +29% at 4KB and +36% at 64KB. On x86 it goes the
+other way — see below.
 
 The catch is that `carryRound` is `a*b + c*d`, and only one of those multiplies
 is the one on the dependency chain. Which one the compiler folds into the
@@ -322,15 +323,33 @@ Don't chase the last accumulator by rotating the loop so the products arrive
 through a phi (which would pin the choice). It costs four more values live
 across the back edge, and the targets that have no assembly at all are the
 32-bit ones, where 64-bit values take register pairs and that is a spill.
-The current form adds nothing live and is bounded on both sides: folded the
-wrong way the chain is exactly the length it was before, so there is no version
-of this that loses.
 
-x86 has no integer multiply-add, so both forms are three dependent instructions
-there and the generated loop body is unchanged instruction for instruction —
-neutral, modulo the one-off peel and finish. Note that benchmarking the amd64
-build under Rosetta does *not* test this: it showed +5%, because the translation
+**On x86 the rearrangement is a loss, and the argument that it was free was
+wrong.** Measured natively on Zen 4 with go1.26.5, `-tags purego`, against
+`c581032`, the commit before it: `Sum64` is 10-17% slower from 4 KB up (+14%
+geomean, n=20, p=0.000 — 314 ns → 365 ns at 4 KB, 4.98 us → 5.50 us at 64 KB)
+and `Digest` 4-10% slower. BENCHMARK.md has the table. Benchmarking the amd64
+build under Rosetta does not catch this: it showed +5%, because the translation
 runs on arm64 and can fuse what x86 cannot.
+
+The half of the argument that held is the chain. x86 has no integer
+multiply-add, so add/rotate/multiply and rotate/multiply/add are both three
+dependent instructions, five cycles either way. What it missed is that the
+pure-Go loop on x86 is nowhere near chain-bound: eight 64-bit multiplies per
+block against one multiply port floor it at 8 cycles, and both forms measure at
+least that anywhere in this part's 3.3-5.1 GHz range — never near 5. So the
+shorter chain buys nothing, and the cost is real. `carryRound` needs
+`input*prime2` live in a register of its own per accumulator, and go1.26.5 duly
+keeps four products live and groups the four `ADDQ`s at the end of the body,
+where the plain round feeds each product straight into its accumulator and
+reuses one scratch register four times. The bodies are otherwise the same — 29
+instructions against 30, eight `IMULQ` either way — so what is left is the
+scheduling.
+
+That makes this a trade rather than a free win: +29/+36% on an M2, -10/-17% on
+Zen 4, and unmeasured on the targets that have no assembly at all, which are the
+ones that actually run this file in production. If it is worth splitting, the
+lever is a build tag; the two forms are three lines each.
 
 ## Testing
 

@@ -19,11 +19,14 @@ package xxhash
 // multiply down to rotate, multiply-add. preRound establishes u from the first
 // block, carryRound is the loop body, and finishRound converts back.
 //
-// Elsewhere the two forms are the same length -- x86 has no integer multiply-add
-// and spells both as three dependent instructions -- so this costs those targets
-// nothing beyond the one-off preRound and finishRound. Nor does it add anything
-// live across the loop, which the register-poor 32-bit targets would notice more
-// than they could gain.
+// Elsewhere the chain is the same length either way -- x86 has no integer
+// multiply-add and spells both forms as three dependent instructions -- but that
+// does not make the rearrangement free there, because the loop is not bounded by
+// the chain. Eight multiplies a block against one multiply port floor it at 8
+// cycles where the chain is 5, and carryRound needs input*prime2 live in its own
+// register per accumulator where the plain round consumes each product straight
+// away. Measured on Zen 4 with go1.26.5, purego Sum64 is 10-17% slower this way.
+// See "The pure-Go block loops" in CLAUDE.md and the table in BENCHMARK.md.
 //
 // How much of the win arrives is up to the compiler. carryRound is a*b + c*d and
 // only one of those multiplies is on the dependency chain; fusing the other one
