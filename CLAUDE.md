@@ -27,7 +27,40 @@ go test -tags appengine ./...      # force the non-unsafe string helpers
 
 go test -run 'TestSum64Reference/avx2' -v .        # one test, one implementation
 taskset -c 2 go test -run xxx -bench 'Sum64/4KB' -benchtime 300ms -count 10 .
+taskset -c 2 go test -run '^$' -bench BenchmarkReport -benchtime 100ms .
 ```
+
+Useful when working on the Go paths:
+
+```bash
+go build -tags purego -gcflags='-d=ssa/check_bce/debug=1' ./   # bounds checks
+go build -gcflags=-m -o /dev/null .                            # inlining
+```
+
+`TestInlining` asserts `Sum64String` and `(*Digest).WriteString` stay inlinable;
+it shells out to `go build -gcflags=-m`, so it works under any GOARCH.
+
+For assembly, `go tool objdump` cannot decode AVX beyond SSE — use binutils
+`objdump -d` to check what the Go assembler actually emitted.
+
+## Benchmarks
+
+`bench_test.go` is for profiling one build. `benchmark_report_test.go` is for
+comparing two, and BENCHMARK.md is what it produced: this tree against
+`998dce2`, the last commit before the optimization work started.
+
+- `BenchmarkReportDispatch` — what a caller gets, with the package choosing its
+  own block loop. It uses nothing but the public API, so the file drops into an
+  older tree unchanged; this is the comparison.
+- `BenchmarkReportKernel` — forces each block loop in turn, so that a change to
+  one of them can be read without the dispatch thresholds in the way. It starts
+  at 256 bytes: below `vecCutoff` the assembly runs the scalar loop whatever the
+  feature flags say, so a forced vector kernel below it measures the scalar one
+  and reads as a suspiciously flat row. That cutoff is written out in the test
+  rather than exported from the assembly, because the two trees being compared
+  need not agree on it and the comparison has to hold the length constant.
+- `BenchmarkReportChunks` — writes that don't fill out a block, the only
+  benchmark here that reaches the short-write path in `Write`.
 
 Benchmarks are noisy at the few-percent level. Pin to a core with `taskset`, use
 `-count 10`, and compare with `benchstat`. Anything under ~1.5% is probably code
@@ -36,17 +69,35 @@ alignment, not your change.
 On a laptop this is worse than it sounds. On a Ryzen 8840HS with a `powersave`
 governor, a single `-count 10` run of one build against another moved by more
 than the effects being chased: the clock swings with thermals, and an SMT
-sibling can take half the core. What eventually worked:
+sibling can take half the core. What eventually worked is to build both trees up
+front and then alternate them, alternating which one goes first, so that
+whatever drifts over the run drifts over both equally:
 
 ```bash
-# Alternate the two builds, and alternate which one goes first, so that
-# whatever drifts over the run drifts over both equally.
-for i in $(seq 1 20); do
-  if (( i % 2 )); then old.test ... >> old.txt; new.test ... >> new.txt
-  else                new.test ... >> new.txt; old.test ... >> old.txt; fi
+git worktree add /tmp/base 998dce2
+cp benchmark_report_test.go /tmp/base/
+cat > /tmp/base/report_stub_test.go <<'EOF'   # that tree has one block loop
+package xxhash
+
+import "testing"
+
+func forEachImplBench(b *testing.B, fn func(*testing.B)) { b.Run("scalar", fn) }
+EOF
+(cd /tmp/base && go test -vet=off -c -o /tmp/base.bin .)   # vet fails there, on
+go test -c -o /tmp/new.bin .                               # asm that predates it
+for i in $(seq 20); do
+  if (( i % 2 )); then order="base new"; else order="new base"; fi
+  for arm in $order; do
+    taskset -c 2 /tmp/$arm.bin -test.run '^$' -test.bench BenchmarkReport \
+      -test.benchtime=100ms >> /tmp/$arm.txt
+  done
 done
-benchstat old.txt new.txt   # ±2% at n=20, enough to see 3%
+benchstat /tmp/base.txt /tmp/new.txt   # ±2% at n=20, enough to see 3%
 ```
+
+Twenty rounds is for reading a few percent. BENCHMARK.md is five, which is
+plenty for the effects in it and not enough for its shortest rows — which is
+what makes those rows the noise floor.
 
 Two things that look like better methodology and are not:
 
@@ -73,18 +124,22 @@ in cycles per 32-byte block rather than MB/s you need the clock, which `sysctl`
 won't give you on Apple silicon: time a long chain of dependent `ADD`s, which
 retires one per cycle. An M2 performance core is ~3.44 GHz.
 
-Useful when working on the Go paths:
+Read the rows whose code the change cannot execute a single instruction of
+before any other. They are the noise floor, and the cheapest way to catch a
+harness that is lying to you: if they aren't flat, the run is invalid however
+plausible the rest of the table looks. In BENCHMARK.md the sizes under 32 bytes
+are that check — they never reach a block loop at all.
 
-```bash
-go build -tags purego -gcflags='-d=ssa/check_bce/debug=1' ./   # bounds checks
-go build -gcflags=-m -o /dev/null .                            # inlining
-```
+Two artifacts `benchmark_report_test.go` exists to avoid, both of which move the
+untouched rows:
 
-`TestInlining` asserts `Sum64String` and `(*Digest).WriteString` stay inlinable;
-it shells out to `go build -gcflags=-m`, so it works under any GOARCH.
-
-For assembly, `go tool objdump` cannot decode AVX beyond SSE — use binutils
-`objdump -d` to check what the Go assembler actually emitted.
+- **Allocating per size.** `bench_test.go` does `make([]byte, n)` for each size,
+  which makes the data pointer's alignment a function of the size and of the
+  whole allocation sequence, and across two builds those sequences differ. Slice
+  every size out of one buffer instead.
+- **Never writing the buffer.** A fresh anonymous mapping that has only been
+  read from is backed by one shared zero page, so the megabyte sizes would sit
+  in L1 and measure nothing. Fill it once.
 
 ## Which file compiles where
 
