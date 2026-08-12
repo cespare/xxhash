@@ -33,6 +33,39 @@ Benchmarks are noisy at the few-percent level. Pin to a core with `taskset`, use
 `-count 10`, and compare with `benchstat`. Anything under ~1.5% is probably code
 alignment, not your change.
 
+On a laptop this is worse than it sounds. On a Ryzen 8840HS with a `powersave`
+governor, a single `-count 10` run of one build against another moved by more
+than the effects being chased: the clock swings with thermals, and an SMT
+sibling can take half the core. What eventually worked:
+
+```bash
+# Alternate the two builds, and alternate which one goes first, so that
+# whatever drifts over the run drifts over both equally.
+for i in $(seq 1 20); do
+  if (( i % 2 )); then old.test ... >> old.txt; new.test ... >> new.txt
+  else                new.test ... >> new.txt; old.test ... >> old.txt; fi
+done
+benchstat old.txt new.txt   # ±2% at n=20, enough to see 3%
+```
+
+Two things that look like better methodology and are not:
+
+- **Linking both versions into one binary** (rename the old `TEXT` symbols out
+  of `git show HEAD:xxhash_amd64.s`, call both from a scratch `_test.go`) and
+  measuring them in interleaved bursts. It removes the clock drift, but the two
+  functions then alternate in one instruction stream and their relative
+  placement is its own effect: two harnesses disagreed by 5 percentage points
+  about the *same machine code*, verified identical by disassembling both test
+  binaries. If you do this anyway, run the control — HEAD against itself — in
+  the same harness, and believe nothing until it reads 1.000.
+- **Normalizing to cycles per block** by timing the scalar loop in the same
+  sequence (it is throughput-locked at 8 cycles per block, so it calibrates the
+  clock). Useful for reading absolute cost, but it inherits the bias above.
+
+Whatever the harness, sweep the input's address before believing a result:
+the buffer's stores and the input's loads 4K-alias each other, so one address
+is one draw from that lottery rather than a measurement of the change.
+
 Useful when working on the Go paths:
 
 ```bash
@@ -90,6 +123,11 @@ instruction by instruction to keep the ports balanced. AVX2 synthesizes the
 64x64 multiply from three `VPMULUDQ`s; AVX512 uses `VPMULLQ` on 256-bit vectors
 (DQ+VL — 512-bit buys nothing here and costs frequency on some parts).
 
+The remaining accumulator chain is add, rotate, multiply: 1+1+3 = 5 cycles per
+32-byte block, and that is the floor for XXH64 on one stream. Measured on Zen 4
+the vector loops sit at about 5.1-5.3, so there is only a few percent left in
+the block loop itself; the scalar loop's eight multiplies put it at 8.
+
 Things that will bite you when editing this file:
 
 - Labels are per-`TEXT`, but a macro containing labels can only be expanded once
@@ -103,10 +141,41 @@ Things that will bite you when editing this file:
   beat larger ones, and entering the vector path below 256 bytes loses.
 - Emit `VZEROUPPER` before leaving a vector path.
 
-**The AVX512 path has never been executed.** It was validated by disassembling
-the encoding and by temporarily substituting the AVX2 kernel into the AVX512
-loops to exercise the surrounding control flow. If you have AVX512 hardware,
-`go test` covers it automatically — say so if you run it.
+**The AVX512 path has been executed.** It was first run on 2026-08-12 on an AMD
+Ryzen 7 8840HS (Zen 4, AVX512F/DQ/VL/BW/VBMI2): the full suite including every
+`forEachImpl` subtest, `-race`, the arch/tag matrix in `testall.sh`, and a
+20,000-case randomized pass over sizes up to 1 MB with random offsets, seeds and
+write splits. It is the fastest path there, a little ahead of AVX2 at every size
+past the cutoff.
+
+Tried on Zen 4 and rejected, so as not to be tried again without a reason:
+
+- **512-bit products** (one `VPMULLQ` and one store per two blocks, buffer
+  64-byte aligned). Fewer instructions, but 1-2% *slower* than the 256-bit loop.
+  Zen 4 splits 512-bit ops into two 256-bit halves, and only the accumulators
+  are on the critical path anyway.
+- **An all-vector round** (`VPADDQ`/`VPROLQ`/`VPMULLQ` on the four accumulators
+  in one YMM). Measured 6 cycles per block against the current 5.1-5.3: on Zen 4
+  `VPROLQ` is 2 cycles where `ROLQ` is 1. It needs no stack buffer and starts up
+  much faster, so it is worth re-checking on a part with a 1-cycle vector
+  rotate, but it is not free money.
+- **Scalar warm-up blocks plus a vectorized tail**, to hide the ~13-cycle
+  pipeline fill and to stop the last `blocks % vecBlocks` blocks falling back to
+  the 8-cycle scalar loop. A wash: back to back, those leftover multiplies land
+  in port slots the next call's vector startup leaves idle, so they were nearly
+  free already.
+- **Pinning the group buffer's alignment.** Every product store is 32 bytes wide
+  and is read back as four 8-byte loads a group later, and off SP its alignment
+  is not ours to pick — `sum64Vec` is tail-jumped into, so SP is whatever the
+  frame of `Sum64`'s caller left. Rounding a base register up to 32 measured
+  neutral at 1 KB and 64 KB and 3% *worse* at 256 bytes, where the two extra
+  instructions sit on the path to the pipeline's first store. Zen 4 evidently
+  does not care whether a 32-byte store straddles a line. Worth re-testing on a
+  part that does, but it is not free: a 32-byte-aligned buffer shares its low
+  bits with 32-byte-aligned input loads, and then a load 4K-aliases a pending
+  store once per 4 KB of input.
+- **`PCALIGN $64` on the loop heads** (16% slower), and **`PREFETCHT0`** ahead of
+  the loop (slower past L2).
 
 arm64 is intentionally untouched by the vectorization work: NEON has no 64x64
 multiply, and the existing `MADD`-based loop was tuned on real hardware. qemu
