@@ -3,6 +3,50 @@
 
 package xxhash
 
+// The block loops below carry acc+input*prime2 rather than acc itself, which is
+// the same rearrangement xxhash_arm64.s makes and is explained at length there.
+// Substituting u = acc + input*prime2, so that acc = rol31(u_prev) * prime1,
+// turns the round
+//
+//	acc = rol31(acc + input*prime2) * prime1
+//
+// into
+//
+//	u = rol31(u_prev) * prime1 + input*prime2
+//
+// which on a machine with a fused integer multiply-add is a rotate and one
+// instruction, taking the loop-carried chain from multiply-add, rotate,
+// multiply down to rotate, multiply-add. preRound establishes u from the first
+// block, carryRound is the loop body, and finishRound converts back.
+//
+// Elsewhere the two forms are the same length -- x86 has no integer multiply-add
+// and spells both as three dependent instructions -- so this costs those targets
+// nothing beyond the one-off preRound and finishRound. Nor does it add anything
+// live across the loop, which the register-poor 32-bit targets would notice more
+// than they could gain.
+//
+// How much of the win arrives is up to the compiler. carryRound is a*b + c*d and
+// only one of those multiplies is on the dependency chain; fusing the other one
+// into the multiply-add leaves the chain exactly as long as it started. Nothing
+// in the source picks which -- operand order, naming the products, and splitting
+// the statements apart all generate the same code -- and Go 1.26 on arm64
+// chooses correctly for all four accumulators in Sum64 but only three of the
+// four in writeBlocks, which is why the measured gain is ~+30% for Sum64 and
+// ~+5% for Digest.Write rather than one number for both. Worth re-checking, but
+// bounded on both sides: chosen the wrong way the chain is the length it was
+// before this rewrite, so no version of it is slower than not doing it at all.
+func preRound(acc, input uint64) uint64 {
+	return acc + input*prime2
+}
+
+func carryRound(u, input uint64) uint64 {
+	return rol31(u)*prime1 + input*prime2
+}
+
+func finishRound(u uint64) uint64 {
+	return rol31(u) * prime1
+}
+
 // Sum64 computes the 64-bit xxHash digest of b with a zero seed.
 func Sum64(b []byte) uint64 {
 	// A simpler version would be
@@ -19,13 +63,22 @@ func Sum64(b []byte) uint64 {
 		v2 := prime2
 		v3 := uint64(0)
 		v4 := initV4
+		v1 = preRound(v1, u64(b[0:8:len(b)]))
+		v2 = preRound(v2, u64(b[8:16:len(b)]))
+		v3 = preRound(v3, u64(b[16:24:len(b)]))
+		v4 = preRound(v4, u64(b[24:32:len(b)]))
+		b = b[32:len(b):len(b)]
 		for len(b) >= 32 {
-			v1 = round(v1, u64(b[0:8:len(b)]))
-			v2 = round(v2, u64(b[8:16:len(b)]))
-			v3 = round(v3, u64(b[16:24:len(b)]))
-			v4 = round(v4, u64(b[24:32:len(b)]))
+			v1 = carryRound(v1, u64(b[0:8:len(b)]))
+			v2 = carryRound(v2, u64(b[8:16:len(b)]))
+			v3 = carryRound(v3, u64(b[16:24:len(b)]))
+			v4 = carryRound(v4, u64(b[24:32:len(b)]))
 			b = b[32:len(b):len(b)]
 		}
+		v1 = finishRound(v1)
+		v2 = finishRound(v2)
+		v3 = finishRound(v3)
+		v4 = finishRound(v4)
 		h = rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 		h = mergeRound(h, v1)
 		h = mergeRound(h, v2)
@@ -69,16 +122,32 @@ func Sum64(b []byte) uint64 {
 	return h
 }
 
+// writeBlocks is only ever called with at least one whole block, which the
+// peeled first round below relies on; the check keeps that a return rather than
+// a bounds panic, and tells the compiler what it needs to elide the peel's
+// bounds checks.
 func writeBlocks(d *Digest, b []byte) int {
+	if len(b) < 32 {
+		return 0
+	}
 	v1, v2, v3, v4 := d.v1, d.v2, d.v3, d.v4
 	n := len(b)
+	v1 = preRound(v1, u64(b[0:8:len(b)]))
+	v2 = preRound(v2, u64(b[8:16:len(b)]))
+	v3 = preRound(v3, u64(b[16:24:len(b)]))
+	v4 = preRound(v4, u64(b[24:32:len(b)]))
+	b = b[32:len(b):len(b)]
 	for len(b) >= 32 {
-		v1 = round(v1, u64(b[0:8:len(b)]))
-		v2 = round(v2, u64(b[8:16:len(b)]))
-		v3 = round(v3, u64(b[16:24:len(b)]))
-		v4 = round(v4, u64(b[24:32:len(b)]))
+		v1 = carryRound(v1, u64(b[0:8:len(b)]))
+		v2 = carryRound(v2, u64(b[8:16:len(b)]))
+		v3 = carryRound(v3, u64(b[16:24:len(b)]))
+		v4 = carryRound(v4, u64(b[24:32:len(b)]))
 		b = b[32:len(b):len(b)]
 	}
+	v1 = finishRound(v1)
+	v2 = finishRound(v2)
+	v3 = finishRound(v3)
+	v4 = finishRound(v4)
 	d.v1, d.v2, d.v3, d.v4 = v1, v2, v3, v4
 	return n - len(b)
 }

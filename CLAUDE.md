@@ -237,6 +237,36 @@ Other arm64 cores were not measured — qemu gives correctness, not timing, so
 don't "optimize" it blind. The carried round should be a win anywhere `MADD`
 latency is at least that of `MUL`, but the NEON result above is an Apple result.
 
+## The pure-Go block loops
+
+`xxhash_other.go` carries the same rearrangement, in `preRound`/`carryRound`/
+`finishRound`. It is worth having there because that file is what arm64 compiles
+to under `purego` or `appengine`, and what every architecture without assembly
+gets: on an M2, `Sum64` goes +29% at 4KB and +36% at 64KB.
+
+The catch is that `carryRound` is `a*b + c*d`, and only one of those multiplies
+is the one on the dependency chain. Which one the compiler folds into the
+multiply-add is its choice and not expressible in the source — operand order,
+naming the products in their own statements, and splitting the assignments apart
+all produce identical code, and removing an unrelated line *after* the loop
+flipped all four accumulators at once. Go 1.26 picks correctly for all four in
+`Sum64` and three of four in `writeBlocks`, which is why `Digest.Write` only
+gains ~5% where `Sum64` gains ~30%.
+
+Don't chase the last accumulator by rotating the loop so the products arrive
+through a phi (which would pin the choice). It costs four more values live
+across the back edge, and the targets that have no assembly at all are the
+32-bit ones, where 64-bit values take register pairs and that is a spill.
+The current form adds nothing live and is bounded on both sides: folded the
+wrong way the chain is exactly the length it was before, so there is no version
+of this that loses.
+
+x86 has no integer multiply-add, so both forms are three dependent instructions
+there and the generated loop body is unchanged instruction for instruction —
+neutral, modulo the one-off peel and finish. Note that benchmarking the amd64
+build under Rosetta does *not* test this: it showed +5%, because the translation
+runs on arm64 and can fuse what x86 cannot.
+
 ## Testing
 
 `xxhash_ref_test.go` holds a self-contained XXH64 implementation that shares no
