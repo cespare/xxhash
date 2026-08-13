@@ -54,11 +54,19 @@ comparing two, and BENCHMARK.md is what it produced: this tree against
   older tree unchanged; this is the comparison.
 - `BenchmarkReportKernel` — forces each block loop in turn, so that a change to
   one of them can be read without the dispatch thresholds in the way. It starts
-  at 256 bytes: below `vecCutoff` the assembly runs the scalar loop whatever the
-  feature flags say, so a forced vector kernel below it measures the scalar one
-  and reads as a suspiciously flat row. That cutoff is written out in the test
-  rather than exported from the assembly, because the two trees being compared
-  need not agree on it and the comparison has to hold the length constant.
+  at 224 bytes, the lower of the two cutoffs: below a cutoff the assembly runs
+  the scalar loop whatever the feature flags say, so a forced vector kernel there
+  measures the scalar one and reads as a suspiciously flat row. Between the two
+  cutoffs that is still true of the `Digest` rows, which is why they read flat
+  from 224 to 256 while the `Sum64` rows move. That threshold is written out in
+  the test rather than exported from the assembly, because the two trees being
+  compared need not agree on it and the comparison has to hold the length
+  constant.
+- Forcing a kernel is also how to settle *where* a cutoff belongs, and it is the
+  only way that works: comparing two builds with different cutoffs measures code
+  placement as much as the change — in one such run the 96-byte row, whose code
+  is identical in both, moved 5%. Forcing scalar against vector at one length
+  inside one binary has no such problem.
 - `BenchmarkReportChunks` — writes that don't fill out a block, the only
   benchmark here that reaches the short-write path in `Write`.
 
@@ -246,6 +254,16 @@ The remaining accumulator chain is add, rotate, multiply: 1+1+3 = 5 cycles per
 at about 5.1-5.3, so there is only a few percent left in the block loop itself;
 the scalar loop's eight multiplies put it at 8.
 
+Both floors hold on Intel as well. Probed with `perf` on a Redwood Cove P-core
+(Core Ultra 9 185H), `IMULQ r64,r64` is 3 cycles' latency and exactly one per
+cycle, `ROLQ` by an immediate is 1 and two per cycle, and an `ADDQ`/`ROLQ`/
+`IMULQ` chain measures 5.015 cycles a round. The AVX2 loop's marginal cost there
+is 5.16 cycles a block at 4 KB and the scalar loop's is 8.0 to three figures, so
+neither has anything left worth chasing. `VPMULUDQ` is two per cycle and
+`VPMULLD` one, which is why the AVX2 product stays three `VPMULUDQ`s: folding
+the two cross terms into one `VPMULLD` would trade three cheap multiplies for
+one that costs a whole port-cycle.
+
 Five is the floor for x86 specifically, because x86 has no integer multiply-add.
 The arm64 section below gets to four with one, by carrying `acc + x*prime2`
 across the loop instead of `acc`, which folds the add into the multiply. There
@@ -260,9 +278,23 @@ Things that will bite you when editing this file:
   rewrite `d+0(FP)` into garbage. Hence `dig`.
 - `off(SP)` without a symbol is the *hardware* SP, i.e. the local frame. That is
   what the group buffer uses.
-- `vecGroupSize` must stay a power of two (the loop bound is a mask), and
-  `vecCutoff` a multiple of it. Both were tuned by measurement: smaller groups
-  beat larger ones, and entering the vector path below 256 bytes loses.
+- `vecGroupSize` must stay a power of two (the loop bound is a mask), and both
+  cutoffs at least as large as it, since the pipeline prologue reads a whole
+  group before the first bound is tested. All three were tuned by measurement:
+  four blocks a group beats two (5% at 1 KB) and eight (7% at 512 bytes), and
+  entering the vector path too early loses.
+- **The two cutoffs are not the same number, and that is deliberate.** The
+  crossover is a property of the entry point as well as the core. Forcing each
+  kernel at a fixed length on a Redwood Cove P-core, the vector loop overtakes
+  the scalar one for `Sum64` at 224 bytes (5.5% ahead there, level at 192, 3.8%
+  behind at 160) but not for `writeBlocks` until somewhere past 256 — still 2%
+  behind at 255, 4% behind at 256, and only 4% ahead by 384. Same block loop,
+  same length, opposite verdict. That is not a draw in the 4K-aliasing lottery:
+  it holds at every input offset from 0 to 3072. So `Sum64` takes the lower
+  crossover and `writeBlocks` keeps the 256 that was tuned on Zen 4, which is
+  the one of the two that no measurement has argued down. Why `writeBlocks`
+  starts paying so much later is not understood; whoever finds out should also
+  re-check whether 256 is still right for it.
 - Emit `VZEROUPPER` before leaving a vector path.
 
 **The AVX512 path has been executed.** It was first run on 2026-08-12 on an AMD

@@ -194,13 +194,27 @@ finalize:                   \
 // vecBlocks is the number of 32-byte blocks converted at a time. vecGroupSize
 // must be a power of two, since the loop bound is computed with a mask.
 //
-// vecCutoff is the length below which the vector path is not entered at all:
-// below it the setup (the group buffer, the broadcast constants, and the
-// pipeline prologue) costs more than the loop saves. It must be a multiple of
-// vecGroupSize.
+// sumCutoff and writeCutoff are the lengths below which Sum64 and writeBlocks
+// don't enter the vector path at all: below them the setup (the group buffer,
+// the broadcast constants, and the pipeline prologue) costs more than the loop
+// saves. Both must be at least vecGroupSize, since the pipeline prologue reads
+// a whole group before the first bound is tested.
+//
+// All three were tuned by measurement. The group stays at four blocks: two
+// costs 5% at 1 KB and eight costs 7% at 512 bytes.
+//
+// The two cutoffs differ because the crossover does. Forcing each kernel at a
+// fixed length on a Redwood Cove P-core puts Sum64's just under 224 -- the
+// vector loop is 5.5% ahead there, level at 192 and 3.8% behind at 160 -- but
+// writeBlocks' somewhere past 256, where the vector loop is still 2% behind at
+// 255 and 4% behind at 256, and only 4% ahead by 384. That gap is not a draw in
+// the 4K-aliasing lottery: it holds at every input offset from 0 to 3072. So
+// Sum64 takes the lower crossover and writeBlocks keeps the 256 that was tuned
+// on a Zen 4, which is the one number here no measurement has argued down.
 #define vecBlocks    4
 #define vecGroupSize 128 // vecBlocks * 32
-#define vecCutoff    256
+#define sumCutoff    224
+#define writeCutoff  256
 
 // prodAVX2 computes the four x*prime2 products of the block at off(p) and
 // stores them at off(SP).
@@ -342,7 +356,7 @@ TEXT ·Sum64(SB), NOSPLIT|NOFRAME, $0-32
 	JB   noBlocks
 
 	// Long inputs are handed off to the vectorized implementation.
-	CMPQ n, $vecCutoff
+	CMPQ n, $sumCutoff
 	JB   scalarBlocks
 	CMPB ·useVec(SB), $0
 	JEQ  scalarBlocks
@@ -371,7 +385,7 @@ afterBlocks:
 
 // func sum64Vec(b []byte) uint64
 //
-// sum64Vec is Sum64 for inputs of at least vecCutoff bytes. It is reached by a
+// sum64Vec is Sum64 for inputs of at least sumCutoff bytes. It is reached by a
 // tail jump from Sum64, which stays frameless so that short inputs don't pay
 // for reserving the group buffer.
 TEXT ·sum64Vec(SB), NOSPLIT, $vecGroupSize-32
@@ -448,7 +462,7 @@ afterBlocks:
 TEXT ·writeBlocks(SB), NOSPLIT|NOFRAME, $0-40
 	MOVQ b_len+16(FP), n
 
-	CMPQ n, $vecCutoff
+	CMPQ n, $writeCutoff
 	JB   scalarBlocks
 	CMPB ·useVec(SB), $0
 	JEQ  scalarBlocks
@@ -489,7 +503,7 @@ scalarBlocks:
 
 // func writeBlocksVec(d *Digest, b []byte) int
 //
-// writeBlocksVec is writeBlocks for inputs of at least vecCutoff bytes.
+// writeBlocksVec is writeBlocks for inputs of at least writeCutoff bytes.
 TEXT ·writeBlocksVec(SB), NOSPLIT, $vecGroupSize-40
 	MOVQ ·primes+0(SB), prime1
 	MOVQ ·primes+8(SB), prime2

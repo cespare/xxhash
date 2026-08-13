@@ -42,7 +42,7 @@ func newReportBuf() []byte {
 // time. The last three sizes cross L2 and L3 on the machines this has been run
 // on, where the block loop stops being what is measured.
 var reportSizes = []int{
-	0, 1, 4, 8, 16, 31, 32, 33, 64, 96, 128, 192, 255, 256, 257, 384,
+	0, 1, 4, 8, 16, 31, 32, 33, 64, 96, 128, 192, 224, 255, 256, 257, 384,
 	512, 1024, 4096, 16384, 65536, 1 << 20, 8 << 20,
 }
 
@@ -86,14 +86,16 @@ func BenchmarkReportDispatch(b *testing.B) {
 	}
 }
 
-// reportCutoff is vecCutoff from xxhash_amd64.s. Below it the assembly takes
-// the scalar block loop whatever the feature flags say, so a forced vector
-// kernel there measures the scalar one and says nothing about the vector code.
+// reportCutoff is the lower of sumCutoff and writeCutoff from xxhash_amd64.s.
+// Below it the assembly takes the scalar block loop whatever the feature flags
+// say, so a forced vector kernel there measures the scalar one and says nothing
+// about the vector code. Between the two cutoffs that is still true of the
+// Digest rows alone, which is why they read flat from here to writeCutoff.
 //
 // It is written out here rather than exported from the assembly on purpose: the
-// two trees being compared don't have to agree on vecCutoff, and a comparison
-// has to hold the length constant across both.
-const reportCutoff = 256
+// two trees being compared don't have to agree on either cutoff, and a
+// comparison has to hold the length constant across both.
+const reportCutoff = 224
 
 // BenchmarkReportKernel forces each block loop this CPU can run, so that a
 // change to one of them can be read without the dispatch thresholds in the way.
