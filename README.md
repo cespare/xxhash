@@ -75,6 +75,17 @@ the vectorized block loop, were 11.7 GB/s (purego) and 16.7 GB/s (asm) at 4 KB.
 Both machines and both Go versions differ, so those are not directly comparable;
 on this machine the same benchmark went from 19.0 to 26.9 GB/s.
 
+The same benchmarks on arm64, using a Neoverse N2 (Azure Cobalt 100) under Go
+1.26.5:
+
+| input size | purego    | asm       |
+| ---------- | --------- | --------- |
+| 4 B        |  1.2 GB/s |  1.4 GB/s |
+| 16 B       |  3.5 GB/s |  4.3 GB/s |
+| 100 B      |  6.7 GB/s |  8.9 GB/s |
+| 4 KB       | 16.4 GB/s | 25.1 GB/s |
+| 10 MB      | 16.6 GB/s | 26.1 GB/s |
+
 ## Projects using this package
 
 - [InfluxDB](https://github.com/influxdata/influxdb)

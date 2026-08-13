@@ -124,6 +124,29 @@ in cycles per 32-byte block rather than MB/s you need the clock, which `sysctl`
 won't give you on Apple silicon: time a long chain of dependent `ADD`s, which
 retires one per cycle. An M2 performance core is ~3.44 GHz.
 
+On a Linux box where `perf` can read the PMU — an Azure Cobalt 100 VM could,
+which is not a given under virtualization; check with `perf stat -e cycles true`
+— stop guessing from ns/op and count cycles instead. Two things it buys:
+
+- **Cycles per block directly.** Write the candidate loops as bare `.S` kernels
+  over one buffer, wrap each in `PERF_EVENT_IOC_RESET`/`READ` around a
+  `perf_event_open` on `PERF_COUNT_HW_CPU_CYCLES`, and take the minimum of
+  several runs. It reads the same to three decimal places run to run, which is a
+  different world from `benchstat` on a 2-core VM, and it is how the round
+  shapes in the arm64 section were separated — 5.00 against 4.41 against 4.04 is
+  not a difference `-benchtime` alone would have settled quickly. Latency and
+  throughput probes for individual instructions are a dozen lines each in the
+  same harness, and worth writing first: they tell you what the loop's floor is
+  before you try to reach it.
+- **Whether a regression is work or placement.** `perf stat -e
+  cycles,instructions` on the two test binaries, divided by the iteration count,
+  gives instructions per op. A change that retires *fewer* instructions per call
+  and still takes longer is code placement, not the change; that is what the
+  64-byte row turned out to be, at 132.7 instructions against 129.4.
+
+The Go-level A/B still needs the alternating harness above, and on a 2-core VM
+pin to core 1 and leave core 0 to everything else.
+
 Read the rows whose code the change cannot execute a single instruction of
 before any other. They are the noise floor, and the cheapest way to catch a
 harness that is lying to you: if they aren't flat, the run is invalid however
@@ -258,26 +281,101 @@ Tried on Zen 4 and rejected, so as not to be tried again without a reason:
 ## arm64 assembly
 
 `xxhash_arm64.s` is scalar throughout — one `blockLoop`, no vector path, no
-feature detection. The block loop is bounded by accumulator latency rather than
-by multiply throughput, so the work went into the shape of the round instead.
+feature detection. The block loop is bounded by accumulator latency and by the
+one-per-cycle `MADD`, so the work went into the shape of the round instead.
 
-The round is carried half-rotated. Substituting `u = acc + x*prime2`, so that
-`acc = rol31(u_prev) * prime1`, turns
+The round is carried part-rotated. Substituting `w = rol31(acc + x*prime2)`, so
+that `acc = w_prev * prime1`, turns
 
     acc = rol31(acc + x*prime2) * prime1
 
 into
 
-    u = rol31(u_prev) * prime1 + x*prime2
+    w = rol31(w_prev * prime1 + x*prime2)
 
-which is a rotate and a `MADD` — a four-cycle chain, against seven for the
+which is a `MADD` and a rotate — a four-cycle chain, against seven for the
 straightforward `MADD`/rotate/multiply and five if you only split the `MADD` in
-two. `preRound` establishes `u` for the first block, `round` carries it, and
-`finishRound` converts back; `blockLoop` peels the first block and finishes
-after the last, so the per-block instruction count is unchanged. Measured on an
-Apple M2: +64% at 64KB, +59% at 4KB, +20% at 256 bytes, +3% at 64, and a wash at
-32, where the peel and the finish are the whole loop. (That last case is why
-`preRound` is a `MADD` and `round` is not — see the comment on it.)
+two. `preRound` establishes `w` for the first block, `round` carries it, and
+`finishRound` converts back with the one multiply the substitution leaves
+outstanding; `blockLoop` peels the first block and finishes after the last, so
+the per-block instruction count is unchanged. Measured on an Apple M2, against
+the straightforward form: +64% at 64KB, +59% at 4KB, +20% at 256 bytes, +3% at
+64, and a wash at 32, where the peel and the finish are the whole loop. (That
+last case is why `preRound` is a `MADD` and `round` is not — see the comment on
+it.)
+
+**Which side of the `MADD` the rotate sits on is not free**, though it reads
+that way. Carrying `u = acc + x*prime2` and spelling the round rotate-then-`MADD`
+is the same three instructions and the same four-cycle chain, and it is how this
+loop was written until it was run on a Neoverse N2 — where it costs 5.0 cycles a
+block against 4.4 for the form above. Nothing in the chain or the port counts
+accounts for that, and six other schedules of the rotate-first form (products
+hoisted a block ahead, products first, phase-ordered, unrolled by two, offset
+addressing, counter early) all came in at 5.0 or worse. Keep the rotate after
+the `MADD`.
+
+**The loop takes two blocks an iteration.** The rounds don't get faster for it —
+the four `MADD`s still need their four cycles — but the decrement and the branch
+go from a sixteenth of the instruction stream to a thirtieth, and on N2 that is
+4.41 cycles a block down to 4.04, which is the floor. An odd block runs on the
+way in rather than jumping into the middle of the pair, and shares the pair
+loop's test for an empty count; both of those are there so that a two-block
+input, which never reaches the loop, executes no more instructions than it did
+when the loop went one block at a time. Getting that wrong cost 2% at 64 bytes
+in two different ways before it cost nothing.
+
+### What a Neoverse N2 looks like from in here
+
+Measured with `perf` cycle counters on an Azure Cobalt 100 (Neoverse N2, ~3.4
+GHz), because the numbers above this line are all Apple numbers and two of them
+do not carry:
+
+| | latency | throughput |
+| --- | --- | --- |
+| `ADD`, `ROR` | 1 | 4/cycle |
+| `MUL` (64-bit) | 2 | 2/cycle |
+| `MADD` (64-bit) | 2 through a multiplicand, **1 through the addend** | **1/cycle** |
+
+Two consequences:
+
+- **Four `MADD`s a block is a four-cycle floor.** The loop measures 4.04-4.16
+  cycles a block at 4KB and up, so there is nothing left in it. Anything that
+  keeps four multiply-adds per block is done here, whatever else it does.
+- **N2 forwards a `MADD`'s addend in a cycle and the M2 does not.** That makes
+  the straightforward round a four-cycle chain on N2 (`MADD` 1, `ROR` 1, `MUL`
+  2) rather than seven, and it measures 4.4-4.6 — faster than the *rotate-first*
+  carried form, though not than the form in the file. The seven-cycle figure
+  further up is an Apple number. Don't quote it as a property of arm64.
+
+Tried on a Neoverse N2 and rejected, so as not to be tried again without a
+reason:
+
+- **SVE for the input products.** N2 has SVE2, and unlike anything in NEON,
+  `MUL Zd.D` is a real 64x64 multiply. A pipelined loop that took the four
+  `x*prime2` in two SVE multiplies and handed them to the scalar `MADD`s through
+  a stack buffer measured 4.0 cycles a block — the floor the scalar loop now
+  reaches anyway, for a great deal more machinery. It is also close to
+  unshippable: Go's assembler doesn't accept SVE at all (`MUL Z2.D, Z0.D, Z1.D`
+  is a parse error), so every instruction would be a hand-encoded `WORD`, and
+  arm64 has no dependency-free way to detect SVE at run time — no CPUID, and
+  `HWCAP` needs cgo or `/proc`. On the numbers it wouldn't be worth it even if
+  it were free: SVE `MUL Zd.D` is 2 cycles per instruction on N2, one 64-bit
+  product per cycle, against two for the scalar `MUL`.
+- **Splitting the `MADD` into `MUL`+`ADD`** to dodge the one-per-cycle limit.
+  Eight multiplies a block at two a cycle is also four cycles, but it is 20
+  instructions against 16, and it measured 5.3-5.9.
+- **Reaching the merge round without the accumulator's last multiply.**
+  `mergeRound` wants `rol31(acc*prime2)*prime1`, and `blockLoop` leaves the
+  accumulator one `*prime1` short, so multiplying what the loop left by
+  `prime1*prime2` gets there two cycles earlier for the same four multiplies.
+  Measured 1.4-3% *slower* at 32-256 bytes, whether the constant came from an
+  immediate or from a sixth entry in `primes`. That path has more slack in it
+  than its chain suggests.
+- **Moving the loop head's `PCALIGN`.** 32 and 64 instead of 16, and dropping it
+  altogether: all within about 1% of each other at every size, and the sizes
+  that never reach the loop moved as much as the ones that do, which is the
+  signature of measuring placement rather than alignment. The three `NOOP`s it
+  emits cost nothing readable, so it stays as it was.
 
 **Don't add a NEON block loop.** This was built and measured, not assumed:
 NEON has no integer multiply of any width in Go's assembler (`VPMULL` is
@@ -298,9 +396,12 @@ If you do revisit it: hand-assembled instructions go in as `WORD $0x...`, and
 `go tool objdump` decodes them (unlike the AVX case above), so the annotations
 can be checked against the built package.
 
-Other arm64 cores were not measured — qemu gives correctness, not timing, so
-don't "optimize" it blind. The carried round should be a win anywhere `MADD`
-latency is at least that of `MUL`, but the NEON result above is an Apple result.
+Two cores have now been measured, an Apple M2 and a Neoverse N2, and they agree
+on the shape of the round and disagree about why. Everything else — Graviton,
+Ampere, the phone cores — is still unmeasured, and qemu gives correctness, not
+timing, so don't "optimize" it blind. The carried round should be a win anywhere
+`MADD` latency is at least that of `MUL`; four `MADD`s a block is the floor
+anywhere `MADD` is one per cycle, which is both of the cores above.
 
 ## The pure-Go block loops
 
@@ -323,6 +424,14 @@ Don't chase the last accumulator by rotating the loop so the products arrive
 through a phi (which would pin the choice). It costs four more values live
 across the back edge, and the targets that have no assembly at all are the
 32-bit ones, where 64-bit values take register pairs and that is a spill.
+
+Nor does the arm64 assembly's rotate placement carry over here. Writing
+`carryRound` as `rol31(w*prime1 + input*prime2)` — the same substitution the
+assembly makes, which is worth 12% there — measured 8% slower for `Sum64` and
+20% slower for `Digest` at 4KB and up on a Neoverse N2, the machine the
+assembly form was tuned on. The assembly gets to choose the schedule; here the
+compiler chooses it, and this spelling makes it choose worse. It is the same
+lesson as the paragraph above, in the other direction.
 
 **On x86 the rearrangement is a loss, and the argument that it was free was
 wrong.** Measured natively on Zen 4 with go1.26.5, `-tags purego`, against

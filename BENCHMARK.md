@@ -1,7 +1,12 @@
 # Benchmarks
 
 This tree against `998dce2`, the last commit before the optimization work, on
-one machine.
+two machines: an amd64 one below and an arm64 one at the end of the file. Each
+was measured when the code it covers last changed, and each says which commit
+that was; a change to one architecture's assembly doesn't move the other's
+numbers, and neither table is re-run when it hasn't.
+
+# amd64
 
 |           |                                                                          |
 |-----------|--------------------------------------------------------------------------|
@@ -239,3 +244,99 @@ The short-write path is in `xxhash.go` and is shared, so the gains at 1 to 8
 byte chunks are the same ones the assembly build shows. At these chunk sizes
 `Write` is the cost and the block loop barely runs, which is why the pure-Go
 regression does not show up until 256-byte chunks.
+
+# arm64
+
+A second machine, and a different story: on this core the tree got slower
+before it got faster, and both moves are in the table.
+
+|           |                                                                     |
+|-----------|---------------------------------------------------------------------|
+| CPU       | Neoverse N2 (Azure Cobalt 100, 2 vCPU, 3.39 GHz measured)           |
+| Go        | go1.26.5 linux/arm64                                                |
+| Baseline  | `998dce2` Add initial support for custom seeds                      |
+| Previous  | `0678bf0` Record that the pure-Go carried round is a loss on x86    |
+| This tree | `fbf899f` Put the arm64 round's rotate after its multiply-add       |
+
+## Method
+
+As above — both trees built up front and run alternately, pinned to core 1 —
+except that there are three of them, rotated so each takes every position, ten
+rounds. Every figure is the median. The clock came out of `perf`: 8.15e9 cycles
+over 2.405 s.
+
+The noise floor here is the sizes under 32 bytes, which never reach a block
+loop. They read within 0.1% between the last two trees, and the whole table
+came in at ±0-2%.
+
+## Dispatched
+
+`998dce2` → `0678bf0` → this tree, with the change from `998dce2` to this tree
+in parentheses. The rate column is this tree's `Sum64`.
+
+| Bytes | Sum64 | Sum64String | Digest | rate |
+|------:|--------|--------|--------|-----:|
+| 0 | 2.75 ns → 2.75 ns → 2.68 ns (-3%) | 2.69 ns → 2.69 ns → 2.66 ns (-1%) | 6.65 ns → 6.49 ns → 6.49 ns (-2%) | — |
+| 1 | 3.13 ns → 3.13 ns → 3.07 ns (-2%) | 3.05 ns → 3.05 ns → 2.96 ns (-3%) | 8.34 ns → 7.54 ns → 7.53 ns (-10%) | 0.326 GB/s |
+| 4 | 3.12 ns → 3.12 ns → 3.1 ns (-1%) | 3.04 ns → 3.04 ns → 3 ns (-1%) | 7.83 ns → 7.97 ns → 7.97 ns (+2%) | 1.29 GB/s |
+| 8 | 3.34 ns → 3.34 ns → 3.34 ns (-0%) | 3.26 ns → 3.26 ns → 3.26 ns (-0%) | 8.28 ns → 7.56 ns → 7.57 ns (-9%) | 2.4 GB/s |
+| 16 | 4.11 ns → 4.11 ns → 4.11 ns (-0%) | 3.99 ns → 3.99 ns → 3.99 ns (-0%) | 10.1 ns → 8.85 ns → 8.85 ns (-12%) | 3.9 GB/s |
+| 31 | 7.81 ns → 7.81 ns → 7.81 ns (-0%) | 7.73 ns → 7.73 ns → 7.73 ns (-0%) | 19.1 ns → 15.1 ns → 15.1 ns (-21%) | 3.97 GB/s |
+| 32 | 7.47 ns → 7.48 ns → 7.4 ns (-1%) | 7.43 ns → 7.42 ns → 7.35 ns (-1%) | 13.7 ns → 13.8 ns → 13.6 ns (-1%) | 4.33 GB/s |
+| 33 | 8.12 ns → 8.07 ns → 8.14 ns (+0%) | 7.98 ns → 8.01 ns → 8 ns (+0%) | 15.2 ns → 15 ns → 15 ns (-2%) | 4.05 GB/s |
+| 64 | 9 ns → 8.88 ns → 9.02 ns (+0%) | 8.88 ns → 8.75 ns → 8.94 ns (+1%) | 15.1 ns → 15 ns → 15.1 ns (+0%) | 7.09 GB/s |
+| 96 | 10.9 ns → 10.7 ns → 10.8 ns (-1%) | 10.6 ns → 10.5 ns → 10.7 ns (+1%) | 16.4 ns → 16.4 ns → 16.6 ns (+2%) | 8.92 GB/s |
+| 128 | 12.3 ns → 12.4 ns → 12.3 ns (-0%) | 12.4 ns → 12.3 ns → 12.3 ns (-1%) | 18 ns → 18.1 ns → 18 ns (+0%) | 10.4 GB/s |
+| 192 | 15.4 ns → 15.4 ns → 15.2 ns (-2%) | 15.2 ns → 15.2 ns → 15 ns (-1%) | 20.6 ns → 20.8 ns → 20.7 ns (+0%) | 12.6 GB/s |
+| 255 | 25.4 ns → 25.3 ns → 25.4 ns (-0%) | 25.4 ns → 25.3 ns → 25.1 ns (-1%) | 32.2 ns → 31.7 ns → 31.7 ns (-2%) | 10 GB/s |
+| 256 | 18.6 ns → 18.4 ns → 18.5 ns (-1%) | 18.5 ns → 18.3 ns → 18.4 ns (-1%) | 23.2 ns → 23.5 ns → 23.1 ns (-1%) | 13.9 GB/s |
+| 257 | 19.8 ns → 19.5 ns → 19.6 ns (-1%) | 19.9 ns → 19.6 ns → 19.6 ns (-1%) | 25 ns → 25.1 ns → 24.6 ns (-2%) | 13.1 GB/s |
+| 384 | 24.5 ns → 24.3 ns → 24.1 ns (-2%) | 24.5 ns → 24.2 ns → 24.1 ns (-2%) | 28.5 ns → 29.2 ns → 27.9 ns (-2%) | 15.9 GB/s |
+| 512 | 30.1 ns → 30.1 ns → 29.1 ns (-3%) | 30 ns → 30.2 ns → 29.1 ns (-3%) | 34 ns → 35 ns → 32.7 ns (-4%) | 17.6 GB/s |
+| 1 KB | 51.1 ns → 53.9 ns → 48.9 ns (-4%) | 51.5 ns → 53.9 ns → 49 ns (-5%) | 55.6 ns → 58.7 ns → 52.4 ns (-6%) | 20.9 GB/s |
+| 4 KB | 177 ns → 196 ns → 164 ns (-8%) | 180 ns → 196 ns → 164 ns (-9%) | 186 ns → 200 ns → 168 ns (-9%) | 25 GB/s |
+| 16 KB | 679 ns → 764 ns → 625 ns (-8%) | 697 ns → 764 ns → 623 ns (-11%) | 710 ns → 772 ns → 630 ns (-11%) | 26.2 GB/s |
+| 64 KB | 2.67 us → 3.04 us → 2.48 us (-7%) | 2.75 us → 3.04 us → 2.48 us (-10%) | 2.79 us → 3.04 us → 2.48 us (-11%) | 26.4 GB/s |
+| 1 MB | 43.4 us → 49.7 us → 42 us (-3%) | 43.8 us → 49.6 us → 42.4 us (-3%) | 44.9 us → 49.9 us → 42.4 us (-6%) | 24.9 GB/s |
+| 8 MB | 322 us → 390 us → 320 us (-0%) | 319 us → 389 us → 321 us (+0%) | 340 us → 389 us → 320 us (-6%) | 26.2 GB/s |
+
+## What moved
+
+**The middle column is the point.** `c581032`, which rearranged the round into a
+rotate followed by a multiply-add, is worth +59% at 4 KB on an Apple M2 and
+**cost 10% at 4 KB here** — `998dce2`'s straightforward round ran the block loop
+at 4.7 cycles a block on this core and the rearranged one at 5.0. Nothing was
+wrong with the reasoning; it was an Apple measurement applied to a core that
+forwards a multiply-add's addend in one cycle, which the M2 does not, and that
+makes the straightforward round chain-equal there. The arm64 section of
+CLAUDE.md has the instruction timings.
+
+This tree puts the rotate on the other side of the multiply-add, which is the
+same three instructions and the same chain on both machines, and takes two
+blocks an iteration. Against the middle column alone, `Sum64`:
+
+| Bytes | `0678bf0` | this tree | | cycles/block |
+|------:|----------:|----------:|--------:|----:|
+| 512 | 30.1 ns | 29.1 ns | -3.4% | 6.39 → 6.17 |
+| 1 KB | 53.9 ns | 48.9 ns | -9.2% | 5.71 → 5.18 |
+| 4 KB | 196 ns | 164 ns | -16.2% | 5.18 → 4.34 |
+| 16 KB | 764 ns | 625 ns | -18.2% | 5.06 → 4.14 |
+| 64 KB | 3.04 us | 2.48 us | -18.3% | 5.03 → 4.11 |
+| 1 MB | 49.7 us | 42.0 us | -15.4% | 5.14 → 4.35 |
+| 8 MB | 390 us | 320 us | -17.7% | 5.04 → 4.14 |
+
+4.11 cycles a block is the floor: four `MADD`s at one per cycle, and this core
+has no way to issue them faster. The cycles/block column includes the peel, the
+merge and the tail, which is why the short rows are so far above it — at 256
+bytes those are most of the call.
+
+**Under 512 bytes, against `998dce2`, nothing is clearly above the floor.**
+`Sum64` reads -3% to +1% and most of that is where the function lands rather
+than what it does. The one real movement down there is `Digest` at 1 to 31
+bytes, -9% to -21%, which is the short-write path in `Write` from `fc098a7` and
+is shared with amd64.
+
+**8 MB reads -0% against `998dce2` and -18% against `0678bf0`.** 8 MB is past
+this VM's 2 MB L2 into a 128 MB shared L3, and at 26 GB/s the block loop is no
+longer the only thing being measured; the 64 KB row is the one to read for the
+loop itself.
