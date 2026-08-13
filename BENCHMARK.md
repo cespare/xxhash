@@ -6,6 +6,11 @@ was measured when the code it covers last changed, and each says which commit
 that was; a change to one architecture's assembly doesn't move the other's
 numbers, and neither table is re-run when it hasn't.
 
+A third machine, a second amd64 one, is measured differently — in cycles and
+instructions from the PMU rather than ns/op — and sits between the two, under
+"amd64, Redwood Cove". It is against the previous commit rather than against
+`998dce2`.
+
 # amd64
 
 |           |                                                                          |
@@ -47,8 +52,9 @@ unless it moves by more than about 10%.**
 
 Three more things worth knowing before reading a row:
 
-- Below 256 bytes (`vecCutoff`) there is no vector kernel at all, so the
-  forced-kernel tables start there. Forcing one below that measures the scalar
+- Below 256 bytes (`vecCutoff`, as that tree spelled it — it is now two
+  constants; see the Redwood Cove section) there is no vector kernel at all, so
+  the forced-kernel tables start there. Forcing one below that measures the scalar
   loop and says nothing.
 - The 255-byte row is slower than the 256-byte row in both trees, which is not
   an artifact: 256 bytes is eight whole blocks and no tail, 255 is seven blocks
@@ -160,7 +166,7 @@ under are the short-write path in `Write`; from 16 up the write goes to
 | 64 | 491 ns → 499 ns (+2%) | 8.21 GB/s |
 | 256 | 286 ns → 304 ns (+6%) | 13.5 GB/s |
 
-The 256-byte chunk is the one row worth a second look: it is `vecCutoff`
+The 256-byte chunk is the one row worth a second look: it is that tree's `vecCutoff`
 exactly, so each of those sixteen writes now enters the vector path, pays its
 pipeline fill and leaves again. At +6% it is well outside the ±2% the large
 inputs settle at, and it is the only chunk size at which a streaming caller is
@@ -245,9 +251,116 @@ byte chunks are the same ones the assembly build shows. At these chunk sizes
 `Write` is the cost and the block loop barely runs, which is why the pure-Go
 regression does not show up until 256-byte chunks.
 
+# amd64, Redwood Cove
+
+A second amd64 machine, measured against the commit before this one rather than
+against `998dce2`, and in cycles rather than ns/op.
+
+|           |                                                                        |
+|-----------|------------------------------------------------------------------------|
+| CPU       | Intel Core Ultra 9 185H (Meteor Lake, P-core 3, `powersave`)            |
+| Go        | go1.26.5 linux/amd64                                                   |
+| Baseline  | `3216e69` Say why the pure-Go loop rejects the assembly's rotate placement |
+| This tree | the tail rewrite and the split vector cutoff                           |
+
+## Method
+
+Not the alternating ns/op harness the tables above use. Each figure is
+`perf stat -e cpu_core/cycles/,cpu_core/instructions/` around the test binary at
+two iteration counts, differenced so that startup and package init cancel, each
+count minimised over 6-8 rounds first, pinned to one P-core. CLAUDE.md's
+Benchmarks section has the procedure and what it takes to get it right. Cycles
+from the PMU are indifferent to the clock, which is what makes this readable on
+a laptop under `powersave`.
+
+**Read the instruction column first.** It is stable to about 0.6% at these
+sizes, where cycles still swing several percent with code placement. And below
+32 bytes the benchmark loop overlaps consecutive independent calls, so the cycle
+figures there are throughput, not latency, and are not additive.
+
+## What moved
+
+- **`Sum64` at 224-255 bytes: -5.7% and -5.8%**, from `sumCutoff` dropping to
+  224. Those lengths now reach the vector block loop. The instruction count goes
+  *up* 6-8% in the same rows, which is what taking the vector path costs and why
+  it needs its own crossover.
+- **`Digest` tails: -4.6% to -7.1% instructions** on remainders of 4, 8 and 31
+  bytes, from the reslicing tail becoming an indexed one. Cycles don't follow in
+  the assembly build — that tail is a serial chain, so removing address
+  arithmetic from around it doesn't shorten it.
+- **Pure Go, small inputs: -3% to -12% cycles** where the same tail change has
+  fewer instructions to hide behind.
+- **A remainder of 0 to 3 bytes costs about 6 instructions**, the one row that
+  went backwards. Pure-Go `Sum64` of 1 byte is 8.9% worse.
+- **Everything from 256 bytes up is flat**, within ±1%, which is the check that
+  the cutoff split didn't disturb the loops themselves.
+
+## amd64 assembly build
+
+Cycles/op and instructions/op, baseline → this tree.
+
+| Bytes | Sum64 cyc | Sum64 ins | Digest cyc | Digest ins |
+|------:|-----------|-----------|------------|------------|
+| 4 | — | — | 24.1 → 24.1 (-0%) | 130.3 → 124.2 (**-4.6%**) |
+| 8 | — | — | 23.1 → 21.6 (-6.2%) | 121.2 → 115.2 (**-4.9%**) |
+| 16 | — | — | 26.4 → 26.6 (+0.9%) | 149.4 → 149.6 (+0.2%) |
+| 31 | — | — | 82.9 → 82.3 (-0.7%) | 211.7 → 196.6 (**-7.1%**) |
+| 64 | — | — | 47.0 → 46.2 (-1.8%) | 257.4 → 259.2 (+0.7%) |
+| 192 | 62.5 → 62.3 (-0.4%) | 228.4 → 228.2 | 63.8 → 63.4 (-0.7%) | 349.4 → 351.2 |
+| 224 | 70.3 → 66.3 (**-5.7%**) | 251.2 → 270.2 (+7.6%) | 71.2 → 71.1 (-0.1%) | 372.4 → 374.4 |
+| 255 | 87.5 → 82.3 (**-5.8%**) | 308.3 → 327.4 (+6.2%) | 102.3 → 102.3 (-0.0%) | 474.2 → 459.4 (-3.1%) |
+| 256 | 68.3 → 68.4 (+0.2%) | 288.3 → 288.6 | 83.7 → 82.9 (-0.9%) | 407.8 → 409.2 |
+| 384 | 87.9 → 87.7 (-0.2%) | 375.2 → 375.6 | 105.8 → 105.7 (-0.1%) | 494.4 → 496.4 |
+| 1 KB | 196.5 → 196.8 (+0.1%) | 810.7 → 810.7 | 216.3 → 218.3 (+0.9%) | 929.6 → 931.8 |
+
+`Sum64` is assembly in this build and the tail change cannot touch it, so its
+rows under 192 bytes are omitted: they are a control, and they read flat.
+
+## Pure Go
+
+`-tags purego`, the same two trees.
+
+| Bytes | Sum64 cyc | Sum64 ins | Digest cyc | Digest ins |
+|------:|-----------|-----------|------------|------------|
+| 1 | 8.0 → 8.7 (**+8.1%**) | 54.2 → 59.1 (**+8.9%**) | 21.4 → 22.3 (+3.9%) | 117.2 → 119.3 (+1.8%) |
+| 4 | 8.6 → 8.3 (-3.2%) | 59.4 → 55.0 (**-7.4%**) | 23.9 → 22.6 (-5.3%) | 130.3 → 124.2 (-4.7%) |
+| 8 | 9.8 → 9.8 (+0.6%) | 64.0 → 63.2 (-1.3%) | 22.6 → 20.2 (**-10.8%**) | 120.6 → 115.2 (-4.5%) |
+| 16 | 12.1 → 10.7 (**-11.7%**) | 76.2 → 74.1 (-2.8%) | 26.7 → 26.8 (+0.5%) | 149.3 → 149.3 (+0.0%) |
+| 31 | 22.6 → 20.6 (**-9.0%**) | 136.2 → 119.5 (**-12.3%**) | 82.0 → 82.2 (+0.2%) | 211.3 → 196.3 (-7.1%) |
+| 33 | 26.1 → 25.2 (-3.5%) | 153.5 → 159.2 (+3.7%) | 41.5 → 42.1 (+1.3%) | 258.3 → 259.9 (+0.6%) |
+| 64 | 31.9 → 31.0 (-2.9%) | 185.3 → 191.6 (+3.4%) | 47.0 → 46.7 (-0.7%) | 285.2 → 287.5 (+0.8%) |
+| 255 | 91.7 → 90.8 (-1.0%) | 481.3 → 465.4 (-3.3%) | 117.6 → 117.5 (-0.1%) | 597.6 → 582.4 (-2.5%) |
+| 1 KB | 286.1 → 279.2 (-2.4%) | 1415.8 → 1421.9 | 282.0 → 283.1 (+0.4%) | 1546.4 → 1547.9 |
+| 4 KB | 1058.6 → 1048.6 (-0.9%) | 5354.2 → 5360.0 | 1062.0 → 1063.3 (+0.1%) | 5580.3 → 5582.6 |
+
+The 33- and 64-byte rows are the same effect as the 1-byte row: their remainders
+are 1 and 0 bytes, so both middle tail steps are skipped and pay for their
+variable-offset guards without saving a clamp. The block loop is untouched, and
+1 KB and 4 KB confirm it — both forms of the loop sit on the 8-cycles-a-block
+floor that one multiply port imposes.
+
+## Where the floors are
+
+Probed directly on this core, eight copies of the instruction per iteration,
+minimum of five runs:
+
+| | latency | throughput |
+| --- | --- | --- |
+| `IMULQ` (64-bit) | 3 | 1/cycle |
+| `ROLQ` by immediate | 1 | 2/cycle |
+| `ADDQ`/`ROLQ`/`IMULQ` round | 5.015 | — |
+| `VPMULUDQ` ymm | — | 2/cycle |
+| `VPMULLD` ymm | — | 1/cycle |
+| `VPADDQ` ymm | — | ~3/cycle |
+
+Which puts the scalar block loop's floor at 8 cycles a block and the vector
+loops' at 5, exactly as on Zen 4. Measured marginal cost at 4 KB: 8.0 for the
+scalar loop, 5.16 for AVX2, 8.10 for the pure-Go loop. There is nothing left in
+any of them.
+
 # arm64
 
-A second machine, and a different story: on this core the tree got slower
+A third machine, and a different story: on this core the tree got slower
 before it got faster, and both moves are in the table.
 
 |           |                                                                     |

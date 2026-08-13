@@ -155,6 +155,37 @@ which is not a given under virtualization; check with `perf stat -e cycles true`
 The Go-level A/B still needs the alternating harness above, and on a 2-core VM
 pin to core 1 and leave core 0 to everything else.
 
+**Counting cycles per op without writing a `.S` kernel.** Run the same Go
+benchmark at two iteration counts and difference them: every fixed cost — process
+startup, package init, the testing package, the warm-up iteration — cancels, and
+what is left is the loop.
+
+```bash
+run() { taskset -c 3 perf stat -x, -e cpu_core/cycles/,cpu_core/instructions/ \
+          ./x.bin -test.run '^$' -test.bench "$1" -test.benchtime "$2x" 2>&1; }
+# per-op = (cycles(N2) - cycles(N1)) / (N2 - N1)
+```
+
+Four things this needs to be right. Anchor the `-test.bench` regex
+(`'^BenchmarkReportDispatch$/^4096$/^Sum64$'`), or it also runs the sibling
+benchmarks and the difference is of the wrong thing. Minimise each iteration
+count over several rounds *separately* and difference the two minima — the
+minimum of a difference is biased by noise in the subtrahend, and will happily
+report a negative cycle count. Make N2 large enough that the delta dwarfs the
+fixed part; with `benchmark_report_test.go`'s 8 MB buffer, package init alone is
+tens of millions of cycles, so at 20k/200k iterations a 54-instruction benchmark
+still carries ±1% of instruction noise, and 200k/2M is what makes the untouched
+rows read as ±0.6%. And on a hybrid Intel part the event must name the PMU
+(`cpu_core/cycles/`, not `cycles`) and the process must be pinned to a P-core,
+or half the counts come back `<not counted>`.
+
+Cycles from the PMU don't care about the clock, which is what makes this work on
+a laptop under `powersave` where ns/op does not. Instructions per op comes back
+stable to about 0.04% at 4 KB, and is the metric to trust below 32 bytes, where
+the benchmark loop overlaps consecutive independent calls and the cycle figures
+stop being additive — a 4-byte `Sum64` measuring *fewer* cycles than a 0-byte one
+is that, not a mistake. `perf_event_paranoid` must be 1 or lower.
+
 Read the rows whose code the change cannot execute a single instruction of
 before any other. They are the noise floor, and the cheapest way to catch a
 harness that is lying to you: if they aren't flat, the run is invalid however
@@ -543,10 +574,59 @@ reuses one scratch register four times. The bodies are otherwise the same — 29
 instructions against 30, eight `IMULQ` either way — so what is left is the
 scheduling.
 
+**It is a loss on that Zen 4 and not on x86 in general, so don't split it by
+build tag.** The same two builds, compared on a Redwood Cove P-core with `perf`
+cycle counters, come out the other way round: at 1 KB, 4 KB and 64 KB the
+carried form is within 1.4% of the plain one for `Sum64` (-0.8%, -1.4%, +0.1%)
+and 4-6% *ahead* for `Digest`. That is the same machine code both places, so the
+disagreement is the core, not the compiler.
+
+The reason neither form wins there is that both are already on the floor: 8.10
+and 8.13 cycles a block at 64 KB, against the 8.0 that one multiply port and
+eight multiplies allow. What differs is only how much slack each leaves — the
+plain form retires 48 instructions a block against the carried form's 41, which
+is IPC 5.9 against 5.1 on a machine that renames six a cycle. So on Redwood Cove
+the extra instructions fit in the shadow of the multiply port and cost nothing,
+and on Zen 4 something about them evidently does not. A build tag can only tell
+`amd64` from `arm64`; it cannot tell these two apart, and picking either form
+for all of x86 would be picking against one of them.
+
+Note also that the "29 instructions against 30" above counts only the real ones.
+Both loops carry a lot of single-byte `NOPL` that the compiler inserts for
+statement boundaries — 9 a block in the carried form and 16 in the plain one —
+and those are a third of the plain loop's instruction stream. Anyone re-opening
+this question should count what `objdump` actually shows rather than what the
+source suggests.
+
 That makes this a trade rather than a free win: +29/+36% on an M2, -10/-17% on
-Zen 4, and unmeasured on the targets that have no assembly at all, which are the
-ones that actually run this file in production. If it is worth splitting, the
-lever is a build tag; the two forms are three lines each.
+Zen 4, roughly neutral to +4% on Redwood Cove, and unmeasured on the targets that
+have no assembly at all, which are the ones that actually run this file in
+production. Three cores, three answers, and no lever that can express that.
+
+### What is actually left in this file
+
+Not the round. At 4 KB on Redwood Cove the loop is at its 8-cycle floor, so
+nothing about the arithmetic can move it there. What is left is instruction
+count, which only matters on cores narrow enough to notice, and the two places
+it hides are the rematerialized constants (see the arm64 note above) and the
+pointer advance:
+
+- **A reslice the compiler can't prove non-empty costs five instructions.** Go
+  won't leave a pointer one past the end of an object, so `b = b[32:]` compiles
+  to `ADDQ`/`MOVQ`/`NEGQ`/`SARQ`/`ANDL`/`ADDQ` — an advance made conditional on
+  the new length. Writing the loop to leave a whole block behind (`for len(b) >=
+  64`, then one peeled last block) makes the result provably non-empty and the
+  advance collapses to a single `ADDQ`, worth 4 instructions a block. **This was
+  built and verified in the generated code but not shipped**, because on the only
+  x86 core available it cannot help — the loop is multiply-bound — and the
+  targets where it would help are the ones that can't be measured here. It is a
+  clean win waiting for someone with the hardware.
+- **Rewriting the loop with an index instead does not work.** `for p := 32;
+  p+32 <= len(b); p += 32` with `b[p+24:p+32]` puts the bounds checks back:
+  `p+32` can overflow in principle, so the prove pass won't chain the guard to
+  the loads. Cutting a `blk := b[p : p+32]` window first doesn't rescue it —
+  that slice bound is unproven too. The reslicing form is the one Go's prove
+  pass handles.
 
 ## Testing
 
