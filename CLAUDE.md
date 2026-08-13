@@ -195,15 +195,38 @@ left to `memmove`, which by 16 bytes is already down to a couple of SSE moves;
 both open-coding those lengths and merely testing for the short case one branch
 later measured worse.
 
+**The tails in `Digest.Sum64` and in `xxhash_other.go`'s `Sum64` keep an offset
+into the buffer rather than reslicing it**, for the reason in the pure-Go
+section: a reslice whose result the compiler can't prove non-empty costs five
+instructions, and the old tail paid that twice. Two details are load-bearing.
+The guards are spelled `p+8 <= len(b)` and not `len(b)-p >= 8`, because only the
+first is the fact the prove pass needs to drop the bounds check — the second
+form compiles with two of them. And the reads are `b[p:p+8]`, a window whose
+length the compiler knows, so the pointer advance is unconditional.
+
+It is a trade, not a free win, and the direction depends on the remainder. Each
+step that runs saves its five-instruction clamp, but each step that is *skipped*
+now costs a `LEAQ` and a merge copy, because `p` is a variable where the old
+guards compared against constants. Measured on Redwood Cove: `Digest` retires
+4.6% fewer instructions on a 4-byte remainder, 4.9% on 8 and 7.1% on 31, and
+pure-Go `Sum64` 12.3% fewer at 31 bytes (-9.0% cycles) and 7.4% at 4 (-3.2%);
+against that, a remainder of 0 to 3 bytes — which includes every length that is
+a multiple of 32 — pays about 6 instructions, and pure-Go `Sum64` of 1 byte is
+8.9% worse. Averaged over the 32 possible remainders it is about -5
+instructions. In the assembly build the cycle counts barely move either way:
+that tail is a serial chain of `tailRound8`s, so removing address arithmetic
+from around it buys nothing on a wide out-of-order core. It is retired
+instructions and I-cache, and it is the pure-Go build that shows it as time.
+
 ## amd64 assembly
 
 `xxhash_amd64.s` has four entry points. `Sum64` and `writeBlocks` are frameless
-and handle short inputs with the plain scalar block loop; for inputs of at least
-`vecCutoff` (256) bytes they **tail-jump** (`JMP ·sum64Vec(SB)`) to `sum64Vec` /
-`writeBlocksVec`, which have a stack frame for the group buffer. The split exists
-so short inputs never pay for the frame. The `Vec` functions are declared in
-`cpu_amd64.go` purely so `go vet` can check their `FP` references; nothing calls
-them from Go.
+and handle short inputs with the plain scalar block loop; for long enough inputs
+— at least `sumCutoff` (224) bytes and `writeCutoff` (256) respectively — they
+**tail-jump** (`JMP ·sum64Vec(SB)`) to `sum64Vec` / `writeBlocksVec`, which have
+a stack frame for the group buffer. The split exists so short inputs never pay
+for the frame. The `Vec` functions are declared in `cpu_amd64.go` purely so
+`go vet` can check their `FP` references; nothing calls them from Go.
 
 The vector loops don't run XXH64 in SIMD — they can't, the accumulators are
 serially dependent. They split each round

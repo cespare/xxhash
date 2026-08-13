@@ -186,23 +186,30 @@ func (d *Digest) Sum64() uint64 {
 
 	// The buffered remainder is at most 31 bytes, so it is folded in with a
 	// fixed sequence of tests rather than a loop.
+	//
+	// Each step keeps an offset into b rather than reslicing it. A reslice
+	// whose result the compiler can't prove non-empty costs five instructions,
+	// because Go won't leave a pointer one past the end of an object and so
+	// makes the advance conditional on the remaining length; b[p:p+8] has a
+	// length the compiler knows, so it advances unconditionally instead.
 	b := d.mem[:d.n&(len(d.mem)-1)]
+	p := 0
 	if len(b) >= 16 {
 		h = tailRound8(h, u64(b[0:8]))
 		h = tailRound8(h, u64(b[8:16]))
-		b = b[16:]
+		p = 16
 	}
-	if len(b) >= 8 {
-		h = tailRound8(h, u64(b[0:8]))
-		b = b[8:]
+	if p+8 <= len(b) {
+		h = tailRound8(h, u64(b[p:p+8]))
+		p += 8
 	}
-	if len(b) >= 4 {
-		h ^= uint64(u32(b[0:4])) * prime1
+	if p+4 <= len(b) {
+		h ^= uint64(u32(b[p:p+4])) * prime1
 		h = rol23(h)*prime2 + prime3
-		b = b[4:]
+		p += 4
 	}
-	for _, c := range b {
-		h ^= uint64(c) * prime5
+	for ; p < len(b); p++ {
+		h ^= uint64(b[p]) * prime5
 		h = rol11(h) * prime1
 	}
 
