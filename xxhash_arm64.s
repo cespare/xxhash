@@ -26,8 +26,9 @@
 #define x4	R23
 
 // The block loop is bounded by the latency of the four accumulator chains and
-// by nothing else, so a round is worth spelling out in whatever way makes one
-// link of that chain shortest. Written directly, a round is
+// by the one-per-cycle multiply-add, so a round is worth spelling out in
+// whatever way makes one link of that chain shortest. Written directly, a
+// round is
 //
 //	acc = rol31(acc + x*prime2) * prime1
 //
@@ -38,36 +39,45 @@
 // Splitting the MADD into a separate multiply and add leaves add, rotate,
 // multiply -- five cycles, with the multiply free to run many blocks ahead.
 //
-// The add comes off too, by carrying the loop rotated by half a round.
-// Substituting u = acc + x*prime2, so that acc = rol31(u_prev) * prime1,
+// The add comes off too, by carrying the loop rotated by part of a round.
+// Substituting w = rol31(acc + x*prime2), so that acc = w_prev * prime1,
 //
-//	u = rol31(u_prev) * prime1 + x*prime2
+//	w = rol31(w_prev * prime1 + x*prime2)
 //
-// which is a rotate and a MADD: four cycles, with nothing left on the chain
-// that isn't part of the hash. preRound puts the accumulators into u for the
-// first block, round carries them, and finishRound converts them back.
+// which is a MADD and a rotate: four cycles, with nothing left on the chain
+// that isn't part of the hash. preRound puts the accumulators into w for the
+// first block, round carries them, and finishRound converts them back with the
+// multiply that the substitution left outstanding.
 //
-// Four cycles is also what the four MADDs need on their own: Apple cores
-// retire one MADD per cycle (against two plain multiplies), so the chain and
-// the multiply pipelines saturate together. See the note in CLAUDE.md on why
-// there is no NEON block loop here -- the input multiplies are not the
-// constraint, so moving them to the vector units buys nothing.
-#define round(acc, x) \
-	MUL  prime2, x         \
-	ROR  $64-31, acc       \
-	MADD prime1, x, acc, acc
+// Four cycles is also what the four MADDs need on their own: both Apple cores
+// and Neoverse retire one MADD per cycle (against two plain multiplies), so
+// the chain and the multiply pipelines saturate together. See the note in
+// CLAUDE.md on why there is no NEON block loop here -- the input multiplies
+// are not the constraint, so moving them to the vector units buys nothing.
+//
+// Which side of the MADD the rotate sits on is free on paper -- carrying
+// acc + x*prime2 and rotating first is the same three instructions and the
+// same four-cycle chain -- but it is not free in fact. On a Neoverse N2 the
+// rotate-first form measures 5.0 cycles per block against 4.4 for this one,
+// for no reason visible in the chain or the port counts; six other schedules
+// of the rotate-first form were tried and none of them beat 5.0. Keep the
+// rotate after the MADD.
+#define round(w, x) \
+	MUL  prime2, x       \
+	MADD prime1, x, w, w \
+	ROR  $64-31, w
 
-// preRound folds the first block into acc, leaving it in the carried form that
-// round expects. This one runs once rather than per block, so unlike round it
-// wants the MADD: there is no loop here for the multiply to run ahead of, and
-// fusing it is both a cycle and an instruction cheaper.
-#define preRound(acc, x) \
-	MADD prime2, acc, x, acc
+// preRound folds the first block into the accumulator, leaving it in the
+// carried form that round expects. This one runs once rather than per block,
+// so unlike round it wants the MADD: there is no loop here for the multiply to
+// run ahead of, and fusing it is both a cycle and an instruction cheaper.
+#define preRound(w, x) \
+	MADD prime2, w, x, w \
+	ROR  $64-31, w
 
 // finishRound converts the carried form back into the accumulator itself.
-#define finishRound(acc) \
-	ROR $64-31, acc \
-	MUL prime1, acc
+#define finishRound(w) \
+	MUL prime1, w
 
 // round0 performs the operation x = round(0, x).
 #define round0(x) \
@@ -84,8 +94,25 @@
 // updating v1, v2, v3, and v4. It assumes that n >= 32.
 //
 // The first block is peeled off to put the accumulators into the form round
-// carries, and the last rotate and multiply are done once at the end rather
-// than once per block.
+// carries, and the multiply that the substitution leaves outstanding is done
+// once at the end rather than once per block.
+//
+// The loop then takes two blocks at a time. The rounds themselves don't get
+// any faster for being unrolled -- the four MADDs still need their four
+// cycles -- but the decrement and the branch stop being a sixteenth of the
+// instruction stream, which is worth most of a cycle a block on a Neoverse N2.
+//
+// When the count left after the peel is odd, one block is run on the way in.
+// Written out rather than jumped to, because it is on the path of every input
+// that reaches the loop at all: entering the pair loop at its midpoint instead
+// costs an add and a taken branch, and inputs of a couple of blocks are short
+// enough that those two instructions measured 2% of the whole call.
+//
+// The one test for an empty count sits after that block rather than before it,
+// so that the odd and even paths share it. Testing before would need a second
+// one, and then a two-block input -- which is peel, odd block, done, and never
+// reaches the loop at all -- would run an instruction more than it did when
+// the loop went a block at a time.
 #define blockLoop() \
 	LSR     $5, n, nblocks  \
 	LDP.P   16(p), (x1, x2) \
@@ -95,6 +122,15 @@
 	preRound(v3, x3)        \
 	preRound(v4, x4)        \
 	SUB     $1, nblocks     \
+	TBZ     $0, nblocks, evenBlocks \
+	LDP.P   16(p), (x1, x2) \
+	LDP.P   16(p), (x3, x4) \
+	round(v1, x1)           \
+	round(v2, x2)           \
+	round(v3, x3)           \
+	round(v4, x4)           \
+	SUB     $1, nblocks     \
+	evenBlocks:             \
 	CBZ     nblocks, blocksDone \
 	PCALIGN $16             \
 	loop:                   \
@@ -104,7 +140,13 @@
 	round(v2, x2)           \
 	round(v3, x3)           \
 	round(v4, x4)           \
-	SUB     $1, nblocks     \
+	LDP.P   16(p), (x1, x2) \
+	LDP.P   16(p), (x3, x4) \
+	round(v1, x1)           \
+	round(v2, x2)           \
+	round(v3, x3)           \
+	round(v4, x4)           \
+	SUB     $2, nblocks     \
 	CBNZ    nblocks, loop   \
 	blocksDone:             \
 	finishRound(v1)         \
