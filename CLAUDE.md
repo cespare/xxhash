@@ -429,9 +429,42 @@ Nor does the arm64 assembly's rotate placement carry over here. Writing
 `carryRound` as `rol31(w*prime1 + input*prime2)` — the same substitution the
 assembly makes, which is worth 12% there — measured 8% slower for `Sum64` and
 20% slower for `Digest` at 4KB and up on a Neoverse N2, the machine the
-assembly form was tuned on. The assembly gets to choose the schedule; here the
-compiler chooses it, and this spelling makes it choose worse. It is the same
-lesson as the paragraph above, in the other direction.
+assembly form was tuned on. It retires the same instructions to do it: at 4KB,
+5210 against 5235 per call for `Sum64` and 5336 against 5398 for `Digest`, so
+under 1.5% either way, while cycles go up 7.8% and 16.8% and IPC drops from
+5.72 to 5.33 and from 5.25 to 4.55. Same work, more waiting, and for two
+different reasons:
+
+- **In `Sum64` the products lose their slack.** Both loops are 25 real
+  instructions with the same mix and the same three-cycle chain. The difference
+  is spacing: the current spelling computes all four `input*prime2` up front and
+  consumes them in four back-to-back `MADD`s eight to fourteen instructions
+  later, where the other emits `MUL`/`MADD`/`MUL`/`MADD` and every `MADD` sits
+  one instruction behind the multiply feeding its addend.
+- **In `writeBlocks` the compiler fuses the wrong multiply.** For two of the
+  four accumulators it emits `v*prime1` as a standalone `MUL` and folds the
+  *input* multiply into the `MADD`, so the loop-carried value arrives as the
+  addend and the link is multiply (2), multiply-add (1), rotate (1) rather than
+  three. The current spelling gets that wrong for one accumulator of four,
+  which is the "three of four" above, confirmed by disassembly rather than
+  inferred; the rearranged one gets it wrong for two, and that is the whole of
+  why `Digest` regresses twice as hard as `Sum64`.
+
+Underneath both: this loop is not chain-bound and has no business being tuned
+as though it were. At 4KB it runs at 7.1 cycles a block against the assembly's
+4.3, nowhere near the four-cycle multiply-add floor, because it carries about 37
+slots a block — 25 real instructions and a dozen `NOOP`s of loop padding —
+including **four instructions an iteration rebuilding `prime1`** out of `MOVD`
+and three `MOVK`s, which go1.26.5 does in both versions rather than keep a
+64-bit constant live around the loop. Shortening a chain with that much
+headroom buys nothing and the scheduling it disturbs costs something. If
+someone wants the pure-Go loop faster on arm64, the rematerialized constant is
+where the instructions actually are, not the round.
+
+To check which way the fusion went, disassemble rather than read the source:
+`go tool objdump -s 'xxhash/v2.writeBlocks$'` on a `-tags purego` test binary,
+find the backward branch, and look at whether each `MADD`'s loop-carried
+operand is one of the two multiplicands (good) or the addend (a cycle worse).
 
 **On x86 the rearrangement is a loss, and the argument that it was free was
 wrong.** Measured natively on Zen 4 with go1.26.5, `-tags purego`, against
