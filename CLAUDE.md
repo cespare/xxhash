@@ -23,7 +23,7 @@ Two hard constraints, both deliberate:
 go test ./...                      # amd64: runs every block loop this CPU supports
 go test -tags purego ./...         # force the pure-Go implementation
 go test -tags appengine ./...      # force the non-unsafe string helpers
-./testall.sh                       # the whole matrix, incl. arm64/386 via qemu
+./testall.sh                       # the whole matrix, the other arch via qemu
 
 go test -run 'TestSum64Reference/avx2' -v .        # one test, one implementation
 taskset -c 2 go test -run xxx -bench 'Sum64/4KB' -benchtime 300ms -count 10 .
@@ -35,6 +35,13 @@ Useful when working on the Go paths:
 ```bash
 go build -tags purego -gcflags='-d=ssa/check_bce/debug=1' ./   # bounds checks
 go build -gcflags=-m -o /dev/null .                            # inlining
+
+# What a block loop actually costs: the span from the backward branch's target to
+# the branch. Count the NOOPs separately -- they are Go's inline marks, one per
+# inlined call that didn't land on a real instruction, and they were a third of
+# this loop's instruction stream before it was written out to call nothing.
+go test -tags purego -c -o /tmp/pg.bin .
+go tool objdump -s 'xxhash/v2.writeBlocks$' /tmp/pg.bin
 ```
 
 `TestInlining` asserts `Sum64String` and `(*Digest).WriteString` stay inlinable;
@@ -42,6 +49,18 @@ it shells out to `go build -gcflags=-m`, so it works under any GOARCH.
 
 For assembly, `go tool objdump` cannot decode AVX beyond SSE — use binutils
 `objdump -d` to check what the Go assembler actually emitted.
+
+`testall.sh` runs natively on whichever of amd64/arm64 it finds itself on and
+sends the other through `qemu-user`, plus 386, arm and riscv64 for the pure-Go
+loops on a 32-bit and a no-assembly 64-bit target. It needs `qemu-user-static`.
+
+**qemu cannot reach the AVX512 block loop.** QEMU's TCG implements no AVX512 at
+all: under `qemu-x86_64-static`, even with `-cpu max`, `CPUID(7,0)` reports
+neither AVX512F/DQ/VL nor the ZMM bits in `XCR0` (`xcr0=0x21f`), so
+`forEachImpl` runs scalar and AVX2 and logs a skip for avx512. Cross-testing amd64
+from an arm64 host therefore covers two of the three block loops; the third needs
+hardware, and the last time it had it is recorded under "The AVX512 path has been
+executed" below.
 
 ## Benchmarks
 
@@ -233,6 +252,26 @@ length to be spilled around it. It is worth 12% of a stream of 8-byte writes and
 left to `memmove`, which by 16 bytes is already down to a couple of SSE moves;
 both open-coding those lengths and merely testing for the short case one branch
 later measured worse.
+
+That boundary was re-tried at 16 on a Neoverse N2, where `memmove` is a call
+rather than a couple of moves, and it loses there too — for a reason worth
+knowing. Widening the first arm from `n == 8` to `n >= 8`, so that one case
+covers 8 to 16 by writing the front and the back, makes the *common* eight-byte
+write store the same word twice: 9% worse on a stream of them, against under 1%
+gained at 16, which is itself inside the noise. Keeping `n == 8` exact and adding
+a third arm for 9 to 16 would fix that and put another branch on the shortest
+path. The boundary is where it is on purpose.
+
+**`Write` skips its trailing `copy` when there is nothing left to copy**, which
+is not a micro-optimization but a call removed from a common path. The last thing
+`Write` does is buffer the sub-block remainder, and the remainder is empty for
+every write that ends on a 32-byte boundary — every write of a multiple of 32,
+and every second write of 16. `copy` of an unknown length is a call to
+`runtime.memmove`, so that was a call to move zero bytes. Guarding it costs one
+instruction when the remainder is non-empty and saves about twelve when it is
+not, and it is worth -5.6% on a stream of 16-byte writes and -5.1% to -9.6% on
+32- and 64-byte ones (`BenchmarkReportChunks`). This is the one part of the
+pure-Go work that the assembly builds also get, since `Write` is in `xxhash.go`.
 
 **The tails in `Digest.Sum64` and in `xxhash_other.go`'s `Sum64` keep an offset
 into the buffer rather than reslicing it**, for the reason in the pure-Go
@@ -497,14 +536,34 @@ under `purego` or `appengine`, and what every architecture without assembly
 gets: on an M2, `Sum64` goes +29% at 4KB and +36% at 64KB. On x86 it goes the
 other way — see below.
 
+The two block loops themselves don't call `carryRound`, and are spelled out in
+terms of `bits.RotateLeft64` and `binary.LittleEndian.Uint64`. That is not a
+style lapse and it is not negotiable for readability: each inlined call leaves a
+NOP in the loop, and there were twelve of them. `preRound`, `carryRound` and
+`finishRound` are still what the peel, the leftover block and the conversion use,
+because those run once a call. See "What the loop's instruction count was made
+of" below.
+
 The catch is that `carryRound` is `a*b + c*d`, and only one of those multiplies
 is the one on the dependency chain. Which one the compiler folds into the
 multiply-add is its choice and not expressible in the source — operand order,
 naming the products in their own statements, and splitting the assignments apart
 all produce identical code, and removing an unrelated line *after* the loop
-flipped all four accumulators at once. Go 1.26 picks correctly for all four in
-`Sum64` and three of four in `writeBlocks`, which is why `Digest.Write` only
-gains ~5% where `Sum64` gains ~30%.
+flipped all four accumulators at once. Re-checked against go1.26.5 after the
+loops were written out by hand (see below), including swapping the two operands
+of the addition, which changes nothing: the fusion is picked after Go has
+canonicalised the operand order, so the source can't reach it.
+
+As it stands both loops fuse the *input* multiply, so the carried value arrives
+as the multiply-add's addend and the link is rotate (1), multiply (2),
+multiply-add through the addend (1) — a cycle longer than the best case. **It
+does not matter, and that is the useful part.** The loop measures 5.6 cycles a
+block against a four-cycle chain, so what binds is throughput; a cycle of chain
+either way is invisible. The earlier reading of this — that `Digest.Write` gained
+~5% where `Sum64` gained ~30% because the fusion went three-of-four rather than
+four-of-four — attributed to the chain what was really instruction count. Both
+functions now compile to the same 18-instruction loop and measure within 0.1
+cycles a block of each other.
 
 Don't chase the last accumulator by rotating the loop so the products arrive
 through a phi (which would pin the choice). It costs four more values live
@@ -537,15 +596,13 @@ different reasons:
   why `Digest` regresses twice as hard as `Sum64`.
 
 Underneath both: this loop is not chain-bound and has no business being tuned
-as though it were. At 4KB it runs at 7.1 cycles a block against the assembly's
-4.3, nowhere near the four-cycle multiply-add floor, because it carries about 37
-slots a block — 25 real instructions and a dozen `NOOP`s of loop padding —
-including **four instructions an iteration rebuilding `prime1`** out of `MOVD`
-and three `MOVK`s, which go1.26.5 does in both versions rather than keep a
-64-bit constant live around the loop. Shortening a chain with that much
-headroom buys nothing and the scheduling it disturbs costs something. If
-someone wants the pure-Go loop faster on arm64, the rematerialized constant is
-where the instructions actually are, not the round.
+as though it were. It used to run at 7.8 cycles a block on N2 against the
+assembly's 4.1, nowhere near the four-cycle multiply-add floor, because it
+carried 37 slots a block against the assembly's 15. Shortening a chain with that
+much headroom buys nothing and the scheduling it disturbs costs something; the
+instructions were where the time was, and taking 19 of them out is worth -20% to
+-28%. That work is done — see "What is actually left in this file" below for what
+it was and what remains.
 
 To check which way the fusion went, disassemble rather than read the source:
 `go tool objdump -s 'xxhash/v2.writeBlocks$'` on a `-tags purego` test binary,
@@ -603,30 +660,69 @@ Zen 4, roughly neutral to +4% on Redwood Cove, and unmeasured on the targets tha
 have no assembly at all, which are the ones that actually run this file in
 production. Three cores, three answers, and no lever that can express that.
 
-### What is actually left in this file
+### What the loop's instruction count was made of
 
-Not the round. At 4 KB on Redwood Cove the loop is at its 8-cycle floor, so
-nothing about the arithmetic can move it there. What is left is instruction
-count, which only matters on cores narrow enough to notice, and the two places
-it hides are the rematerialized constants (see the arm64 note above) and the
-pointer advance:
+Not the round. On Redwood Cove the loop is at its 8-cycle multiply-port floor, so
+nothing about the arithmetic can move it there, and on N2 it was 3.7 cycles above
+a floor it had no business being near. What was actually in it was instruction
+count, which only matters on cores narrow enough to notice — and it was 37 slots
+a block against the assembly's 15. Three things accounted for 19 of them, and all
+three are now taken. Measured on a Neoverse N2, they bring the loop to 18
+instructions and 5.59 cycles a block, `Sum64` -23% at 4 KB and -28% at 64 KB and
+`Digest` -21%; BENCHMARK.md has the tables.
 
-- **A reslice the compiler can't prove non-empty costs five instructions.** Go
-  won't leave a pointer one past the end of an object, so `b = b[32:]` compiles
-  to `ADDQ`/`MOVQ`/`NEGQ`/`SARQ`/`ANDL`/`ADDQ` — an advance made conditional on
-  the new length. Writing the loop to leave a whole block behind (`for len(b) >=
-  64`, then one peeled last block) makes the result provably non-empty and the
-  advance collapses to a single `ADDQ`, worth 4 instructions a block. **This was
-  built and verified in the generated code but not shipped**, because on the only
-  x86 core available it cannot help — the loop is multiply-bound — and the
-  targets where it would help are the ones that can't be measured here. It is a
-  clean win waiting for someone with the hardware.
-- **Rewriting the loop with an index instead does not work.** `for p := 32;
+- **A reslice the compiler can't prove non-empty costs five instructions** (-3).
+  Go won't leave a pointer one past the end of an object, so `b = b[32:]`
+  compiles to `ADDQ`/`MOVQ`/`NEGQ`/`SARQ`/`ANDL`/`ADDQ` on amd64 and
+  `SUB`/`NEG`/`ASR`/`AND`/`ADD` on arm64 — an advance made conditional on the new
+  length. Bounding the loop at 64 so it leaves a whole block behind, and doing
+  that block after it, makes the result provably non-empty and collapses the
+  advance to one add. The leftover block pays the conditional form once a call.
+- **A constant is what the register allocator will not keep live** (-4). go1.26.5
+  rebuilt `prime1` on arm64 out of a `MOVD` and three `MOVK`s every iteration,
+  because a rematerializable value is cheaper to recompute than to hold — which
+  is true when recomputing it is one instruction, as on amd64, and false when it
+  is four. Reading it out of the `primes` array instead gives the allocator a
+  load, which it cannot rematerialize and so must keep in a register. This is why
+  `primes` now has two reasons to exist; `TestInitConstants` pins its order.
+- **Every inlined call leaves a NOP behind** (-12). Go emits an inline mark per
+  inlined call so a traceback can name the frame, and a mark that doesn't land on
+  the address of an instruction the function was emitting anyway survives as a
+  NOP. Four accumulators' worth of `carryRound` and `u64` left **twelve NOPs in a
+  loop whose real work is eighteen instructions** — a third of the stream, and
+  the same order of magnitude on amd64, ppc64le and loong64. Writing the body out
+  in terms of `bits.RotateLeft64` and `binary.LittleEndian.Uint64` so that it
+  calls nothing removes all of them. This is the least obvious of the three and
+  the one most likely to apply elsewhere: any hot loop in this package that calls
+  an inlinable helper per iteration is carrying them. It is worth only ~4% by
+  itself on N2 — NOPs are nearly free to issue — but it is what makes the other
+  two readable, and on a narrower core it should be worth more.
+
+Two things that do not work, so as not to be tried again:
+
+- **Rewriting the loop with an index instead of a reslice.** `for p := 32;
   p+32 <= len(b); p += 32` with `b[p+24:p+32]` puts the bounds checks back:
   `p+32` can overflow in principle, so the prove pass won't chain the guard to
   the loads. Cutting a `blk := b[p : p+32]` window first doesn't rescue it —
   that slice bound is unproven too. The reslicing form is the one Go's prove
   pass handles.
+- **Taking two blocks an iteration**, the way `xxhash_arm64.s` does, where it is
+  worth 4.41 → 4.04 cycles a block. Here it retires 16 instructions a block
+  rather than 18 and ran `Sum64` **7% slower** on N2 (`Digest` 1% faster), which
+  by this repo's own rule — fewer instructions and more time — is code placement
+  rather than the change. For five copies of the round in the source, on a loop
+  that is no longer close to its overhead, it is not worth re-litigating without
+  a core where the loop is front-end bound.
+
+**Every target this file compiles for retires fewer instructions per block for
+these three changes**, which is the check that matters given that the cores which
+actually run it can't be measured here. `writeBlocks`' inner loop, in slots:
+arm64 37 → 18, amd64 42 → 25, ppc64le 41 → 24, loong64 43 → 24, riscv64 108 →
+101, arm 221 → 179, 386 311 → 282. The 32-bit targets were the worry — a `uint64`
+held live costs a register pair there — and they gained two stack references
+between them while shedding 29 and 42 slots, so the spill didn't happen. To
+re-run that audit, cross-compile a `-tags purego` test binary per GOARCH and
+disassemble `writeBlocks`; no execution is needed and `go test -c` is enough.
 
 ## Testing
 

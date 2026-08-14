@@ -453,3 +453,118 @@ is shared with amd64.
 this VM's 2 MB L2 into a 128 MB shared L3, and at 26 GB/s the block loop is no
 longer the only thing being measured; the 64 KB row is the one to read for the
 loop itself.
+
+# arm64, Neoverse N2 — the pure-Go loops and the streaming path
+
+The same machine as the section above, measured again against the commit before
+this one, and in cycles and instructions from the PMU rather than ns/op. The
+arm64 assembly is untouched by this work: `Sum64` and `writeBlocks` disassemble
+identically, so the assembly build moves only where it shares `xxhash.go` with
+everything else.
+
+|           |                                                                     |
+|-----------|---------------------------------------------------------------------|
+| CPU       | Neoverse N2 (Azure Cobalt 100, 2 vCPU, ~3.4 GHz)                    |
+| Go        | go1.26.5 linux/arm64                                                |
+| Baseline  | `7246338` Record what a Redwood Cove P-core says                    |
+| This tree | the pure-Go loop rewrite and `Write`'s empty trailing copy          |
+
+## Method
+
+As in the Redwood Cove section: `perf stat -e cycles,instructions` around the
+test binary at two iteration counts, differenced so startup and package init
+cancel, each count minimised over three rounds first, pinned to core 1. Read the
+instruction column first — it repeats to about 0.05%, where cycles still swing a
+percent or two with code placement.
+
+The noise floor is the 16- and 31-byte rows, which never reach a block loop.
+Their instruction counts are identical to the baseline's in every table below,
+which is the check that the harness is telling the truth; their cycles move up
+to +1.9%, and that is what placement noise looks like on a 15-cycle row.
+
+## What moved
+
+- **The pure-Go block loop went from 37 retired instructions per 32-byte block
+  to 18**, and from 7.80 cycles a block to 5.59. Three changes, none of them
+  arithmetic: the loop leaves a whole block behind so the pointer advance is
+  unconditional (-3), `prime1` is held in a register instead of being rebuilt
+  from a `MOVD` and three `MOVK`s every iteration (-4), and the body calls
+  nothing, so Go's inline marks stop landing in it as NOPs (-12).
+- **Pure Go, 1 KB and up: -20% to -28% cycles, -42% to -51% instructions.**
+- **Pure Go, 64 and 96 bytes: -2% to -12.6%**, from the same changes with fewer
+  blocks to amortise over.
+- **`Write` no longer calls `runtime.memmove` to copy zero bytes**, which is what
+  it did whenever a write ended on a block boundary. Worth -5.6% on a stream of
+  16-byte writes and -5.6% on 32-byte ones in the assembly build, and it is the
+  only part of this work the assembly build sees.
+- **A 32-byte input costs one more instruction** in pure Go, the test for the
+  block the loop leaves behind, and a write that ends mid-block costs one more,
+  the test that skips the empty copy. Both are visible in the tables and neither
+  is worth undoing: the empty-copy test replaces about twelve instructions when
+  it fires.
+
+## Pure Go
+
+Cycles/op and instructions/op, baseline → this tree.
+
+| Bytes | `Sum64` cyc | ins | `Digest` cyc | ins |
+|------:|------------:|----:|-------------:|----:|
+| 16 | 14.9 → 15.2 (+1.9%) | 81 → 81 (0%) | 29.9 → 30.2 (+1.2%) | 162 → 162 (0%) |
+| 31 | 31.1 → 31.2 (+0.2%) | 139 → 139 (0%) | 49.8 → 50.2 (+0.8%) | 222 → 222 (0%) |
+| 32 | 33.7 → 33.7 (-0.1%) | 166 → 167 (+0.6%) | 46.4 → 44.5 (-4.1%) | 248 → 237 (-4.4%) |
+| 64 | 40.4 → 39.6 (-2.1%) | 203 → 199 (-2.0%) | 53.4 → 49.2 (-8.0%) | 285 → 265 (-7.0%) |
+| 96 | 47.9 → 44.7 (-6.8%) | 240 → 223 (-7.1%) | 61.2 → 53.5 (-12.6%) | 322 → 289 (-10.2%) |
+| 1 KB | 262 → 204 (-22.2%) | 1314 → 746 (-43.2%) | 267 → 214 (-20.0%) | 1396 → 812 (-41.9%) |
+| 4 KB | 971 → 744 (-23.4%) | 4868 → 2475 (-49.2%) | 949 → 753 (-20.6%) | 4950 → 2541 (-48.7%) |
+| 64 KB | 15898 → 11510 (-27.6%) | 75950 → 37066 (-51.2%) | 14466 → 11470 (-20.7%) | 76026 → 37131 (-51.2%) |
+
+Per 32-byte block, taken as the 4 KB → 64 KB difference so that the peel, the
+merge and the tail cancel:
+
+| | cycles/block | instructions/block |
+|---|---:|---:|
+| pure Go, baseline | 7.80 | 37.0 |
+| pure Go, this tree | 5.59 | 18.0 |
+| arm64 assembly | 4.10 | 15.0 |
+
+The assembly row is the floor — four `MADD`s at one per cycle — and is unchanged
+by this work. The pure-Go loop is now within 1.5 cycles of it having been 3.7
+away, and what is left is the four instructions of loop overhead the assembly
+folds into `LDP.P` and a `CBNZ` on a pair of blocks.
+
+## arm64 assembly build
+
+Only `Digest` moves, and only from `Write`'s empty trailing copy. Every `Sum64`
+row is flat with identical instruction counts, which is the second noise floor
+in this table.
+
+| Bytes | `Sum64` cyc | ins | `Digest` cyc | ins |
+|------:|------------:|----:|-------------:|----:|
+| 16 | 14.08 → 14.18 (+0.7%) | 52 → 52 (0%) | 29.9 → 30.0 (+0.6%) | 162 → 162 (0%) |
+| 31 | 26.60 → 26.59 (-0.0%) | 80 → 80 (0%) | 49.8 → 50.0 (+0.2%) | 222 → 222 (0%) |
+| 32 | 25.17 → 25.13 (-0.2%) | 88 → 88 (0%) | 46.5 → 45.7 (-1.8%) | 224 → 212 (-5.4%) |
+| 64 | 30.78 → 30.72 (-0.2%) | 103 → 103 (0%) | 51.3 → 50.6 (-1.5%) | 239 → 227 (-5.0%) |
+| 96 | 36.53 → 36.56 (+0.1%) | 121 → 121 (0%) | 56.6 → 55.0 (-2.7%) | 254 → 242 (-4.7%) |
+| 1 KB | 167 → 167 (+0.0%) | 556 → 556 (0%) | 178 → 177 (-0.3%) | 690 → 678 (-1.7%) |
+| 4 KB | 557 → 559 (+0.4%) | 1998 → 1998 (0%) | 570 → 569 (-0.1%) | 2131 → 2119 (-0.6%) |
+| 64 KB | 8403 → 8441 (+0.5%) | 30820 → 30820 (0%) | 8415 → 8410 (-0.1%) | 30951 → 30940 (-0.0%) |
+
+## Streaming writes
+
+`BenchmarkReportChunks`: 4096 bytes into one `Digest` in fixed-size pieces. This
+is the only benchmark here that reaches the short-write path in `Write`.
+
+| Chunk | assembly cyc | ins | pure Go cyc | ins |
+|------:|-------------:|----:|------------:|----:|
+| 1 | -2.4% | -0.4% | -1.0% | -0.4% |
+| 4 | -1.9% | -1.5% | -1.6% | -1.5% |
+| 7 | -0.4% | -0.2% | -0.7% | -0.2% |
+| 8 | -4.0% | -3.0% | -3.1% | -2.9% |
+| 16 | -5.6% | -4.6% | -5.1% | -4.6% |
+| 24 | -1.9% | -1.6% | -1.9% | -1.6% |
+| 32 | -5.6% | -8.5% | -9.6% | -6.7% |
+| 64 | -5.1% | -7.6% | -8.5% | -9.8% |
+
+The pattern is the point: 8, 16, 32 and 64 are the chunk sizes whose writes land
+on a 32-byte boundary and so used to call `memmove` to move nothing. 7 and 24
+never do, and read as noise.
