@@ -31,6 +31,11 @@ const (
 //
 // The consts are used when possible in Go code to avoid MOVs but we need a
 // contiguous array for the assembly code.
+//
+// The pure-Go block loops read prime1 out of here too, for the opposite reason:
+// a constant is rematerializable and so is exactly what the register allocator
+// declines to keep live across a loop. See the comment on p1 in
+// xxhash_other.go. TestInitConstants pins the order both of them rely on.
 var primes = [...]uint64{prime1, prime2, prime3, prime4, prime5}
 
 // Digest implements hash.Hash64.

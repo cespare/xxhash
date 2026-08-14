@@ -221,8 +221,14 @@ func BenchmarkImplSizes(b *testing.B) {
 }
 
 // TestInitConstants checks the hand-derived accumulator seeds against the
-// wrapping arithmetic they stand for.
+// wrapping arithmetic they stand for, and pins the order of the primes array,
+// which both the assembly and the pure-Go block loops index into.
 func TestInitConstants(t *testing.T) {
+	for i, want := range [...]uint64{prime1, prime2, prime3, prime4, prime5} {
+		if primes[i] != want {
+			t.Errorf("primes[%d] = %d; want %d", i, primes[i], want)
+		}
+	}
 	p1, p2 := primes[0], primes[1]
 	if got, want := initV1, p1+p2; got != want {
 		t.Errorf("initV1 = %d; want prime1+prime2 = %d", got, want)

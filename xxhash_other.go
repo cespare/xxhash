@@ -3,6 +3,11 @@
 
 package xxhash
 
+import (
+	"encoding/binary"
+	"math/bits"
+)
+
 // The block loops below carry acc+input*prime2 rather than acc itself, which is
 // the same rearrangement xxhash_arm64.s makes and is explained at length there.
 // Substituting u = acc + input*prime2, so that acc = rol31(u_prev) * prime1,
@@ -32,12 +37,34 @@ package xxhash
 // only one of those multiplies is on the dependency chain; fusing the other one
 // into the multiply-add leaves the chain exactly as long as it started. Nothing
 // in the source picks which -- operand order, naming the products, and splitting
-// the statements apart all generate the same code -- and Go 1.26 on arm64
-// chooses correctly for all four accumulators in Sum64 but only three of the
-// four in writeBlocks, which is why the measured gain is ~+30% for Sum64 and
-// ~+5% for Digest.Write rather than one number for both. Worth re-checking, but
-// bounded on both sides: chosen the wrong way the chain is the length it was
-// before this rewrite, so no version of it is slower than not doing it at all.
+// the statements apart all generate the same code, and that was re-checked
+// against go1.26.5 after the loops were written out by hand below. As it stands
+// arm64 fuses the input multiply in both functions, so the carried value arrives
+// as the multiply-add's addend and the link is rotate (1), multiply (2),
+// multiply-add through the addend (1). That is a cycle longer than the best case
+// and it does not matter: the loop measures 5.6 cycles a block against a
+// four-cycle chain, so what binds is throughput, not the chain. Bounded on both
+// sides either way -- chosen the wrong way the chain is the length it was before
+// this rewrite, so no version of it is slower than not doing it at all.
+//
+// The block loops themselves do not call carryRound, u64 or rol31, and are
+// written out in terms of bits.RotateLeft64 and binary.LittleEndian.Uint64
+// instead. That is not a style choice and it is worth a great deal more than it
+// looks. Go emits an inline mark per inlined call so that a traceback can name
+// the inlined frame, and a mark that does not land on the address of some
+// instruction the function was going to emit anyway survives into the binary as
+// a NOP. Four accumulators' worth of carryRound and u64 left twelve of them in
+// the loop on arm64 -- a third of the whole instruction stream, and about the
+// same on amd64, ppc64le and loong64 -- for a loop whose real work is eighteen
+// instructions. Calling nothing removes them all. Measured on a Neoverse N2 it
+// is worth 4% of Sum64 on its own, and it is what lets the two changes either
+// side of it be read at all.
+//
+// Between the three of them -- the unconditional pointer advance described in
+// Sum64, prime1 held in a register, and calling nothing -- a 32-byte block went
+// from 37 retired instructions to 18, and from 7.80 cycles to 5.64 for Sum64 and
+// 7.04 to 5.61 for Digest on a Neoverse N2. Every other target this file
+// compiles for retires fewer instructions per block as well; see CLAUDE.md.
 func preRound(acc, input uint64) uint64 {
 	return acc + input*prime2
 }
@@ -71,7 +98,60 @@ func Sum64(b []byte) uint64 {
 		v3 = preRound(v3, u64(b[16:24:len(b)]))
 		v4 = preRound(v4, u64(b[24:32:len(b)]))
 		b = b[32:len(b):len(b)]
-		for len(b) >= 32 {
+		// prime1 comes out of the array rather than being spelled as the
+		// constant, because a rematerializable value is exactly what the
+		// register allocator will not keep live across a loop: go1.26.5 rebuilt
+		// it on arm64 every iteration out of a MOVD and three MOVKs, four of the
+		// loop's instructions to produce a number that never changes. A load is
+		// not rematerializable, so the allocator has to hold it, and the loop
+		// pays for it once. Worth 10% of the loop on a Neoverse N2, and fewer
+		// instructions per block on every other target too -- including the
+		// 32-bit ones, where holding a uint64 costs a register pair and might
+		// have been expected to spill instead. It does not: see CLAUDE.md.
+		// The guard is the loop's own entry test, which the compiler folds into
+		// it; it is written out so that the load lands on the path that has a
+		// loop to run, and inputs of a single block don't pay for it.
+		if len(b) >= 64 {
+			p1 := primes[0]
+			_ = p1
+		}
+		// The loop stops with a whole block still in hand, which the block after
+		// it consumes. That shape is not for the rounds' sake but for the pointer
+		// advance: Go won't leave a pointer one past the end of an object, so a
+		// b = b[32:] whose result the compiler can't prove non-empty compiles the
+		// advance conditionally on the new length -- NEG, ASR, AND and then the
+		// ADD on arm64, five instructions where one would do. Bounding the loop
+		// at 64 leaves at least a block behind, which makes the result provably
+		// non-empty and collapses it to that one ADD. The cost is a copy of the
+		// round and one more test per call; the saving is three instructions on
+		// every iteration.
+		//
+		// An index instead of a reslice does not work: p+32 can overflow in
+		// principle, so the prove pass won't chain the loop guard to the loads
+		// and the bounds checks come back. Reslicing is the form Go handles.
+		//
+		// Taking two blocks an iteration on top of this, the way xxhash_arm64.s
+		// does, was measured and rejected: it retires 16 instructions a block
+		// rather than 18 and still ran Sum64 7% slower on a Neoverse N2, which is
+		// the signature of code placement rather than of the change, for five
+		// copies of the round in the source.
+		if len(b) >= 64 {
+			// This guard is the loop's own entry test, which the compiler folds
+			// away; writing it out gives the load above a home on the path that
+			// has a loop to run, so a one-block input doesn't pay for it.
+			p1 := primes[0]
+			for len(b) >= 64 {
+				v1 = bits.RotateLeft64(v1, 31)*p1 + binary.LittleEndian.Uint64(b[0:8:len(b)])*prime2
+				v2 = bits.RotateLeft64(v2, 31)*p1 + binary.LittleEndian.Uint64(b[8:16:len(b)])*prime2
+				v3 = bits.RotateLeft64(v3, 31)*p1 + binary.LittleEndian.Uint64(b[16:24:len(b)])*prime2
+				v4 = bits.RotateLeft64(v4, 31)*p1 + binary.LittleEndian.Uint64(b[24:32:len(b)])*prime2
+				b = b[32:len(b):len(b)]
+			}
+		}
+		// The block the loop left behind. There is at most one, so this is the
+		// one place the conditional advance above is still paid, and it can call
+		// carryRound like everything else that runs once a call.
+		if len(b) >= 32 {
 			v1 = carryRound(v1, u64(b[0:8:len(b)]))
 			v2 = carryRound(v2, u64(b[8:16:len(b)]))
 			v3 = carryRound(v3, u64(b[16:24:len(b)]))
@@ -145,7 +225,21 @@ func writeBlocks(d *Digest, b []byte) int {
 	v3 = preRound(v3, u64(b[16:24:len(b)]))
 	v4 = preRound(v4, u64(b[24:32:len(b)]))
 	b = b[32:len(b):len(b)]
-	for len(b) >= 32 {
+	// Bounded at 64 so that the advance is unconditional, prime1 out of the array
+	// so that it stays in a register, and the round written out so that inlining
+	// leaves no NOPs behind: all three are explained in Sum64.
+	if len(b) >= 64 {
+		p1 := primes[0]
+		for len(b) >= 64 {
+			v1 = bits.RotateLeft64(v1, 31)*p1 + binary.LittleEndian.Uint64(b[0:8:len(b)])*prime2
+			v2 = bits.RotateLeft64(v2, 31)*p1 + binary.LittleEndian.Uint64(b[8:16:len(b)])*prime2
+			v3 = bits.RotateLeft64(v3, 31)*p1 + binary.LittleEndian.Uint64(b[16:24:len(b)])*prime2
+			v4 = bits.RotateLeft64(v4, 31)*p1 + binary.LittleEndian.Uint64(b[24:32:len(b)])*prime2
+			b = b[32:len(b):len(b)]
+		}
+	}
+	// The block the loop left behind; see Sum64.
+	if len(b) >= 32 {
 		v1 = carryRound(v1, u64(b[0:8:len(b)]))
 		v2 = carryRound(v2, u64(b[8:16:len(b)]))
 		v3 = carryRound(v3, u64(b[16:24:len(b)]))
