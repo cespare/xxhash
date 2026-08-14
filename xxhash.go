@@ -109,6 +109,15 @@ func (d *Digest) Write(b []byte) (n int, err error) {
 	// measured slower; folding the test into the block below instead of putting
 	// it here, where everything longer falls straight past it into the original
 	// code, cost more on the block path than it gained.
+	//
+	// Re-tried on a Neoverse N2, where memmove is a call rather than a couple of
+	// moves, and it loses there too, for a reason that is worth writing down:
+	// widening the first arm to n >= 8 so that it covers 8 to 16 by writing the
+	// front and the back makes the common eight-byte write store the same word
+	// twice, which cost 9% of a stream of them (BenchmarkReportChunks/8) against
+	// under 1% gained at 16, itself inside the noise. Keeping n == 8 exact and
+	// adding a third arm for 9 to 16 would fix that and put another branch on
+	// the shortest path. The boundary is where it is on purpose.
 	if n <= 8 && d.n+n < 32 {
 		switch {
 		case n == 8:
@@ -150,7 +159,15 @@ func (d *Digest) Write(b []byte) (n int, err error) {
 	}
 
 	// Store any remaining partial block.
-	copy(d.mem[:], b)
+	//
+	// There is often nothing left: the length is zero for every write that ends
+	// on a block boundary, which is every write of a multiple of 32 and every
+	// second write of 16. copy of a length the compiler doesn't know is a call
+	// to runtime.memmove, and entering it to move no bytes costs more than the
+	// predictable branch that skips it.
+	if len(b) > 0 {
+		copy(d.mem[:], b)
+	}
 	d.n = len(b)
 
 	return
