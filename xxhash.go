@@ -24,8 +24,7 @@ var primes = [...]uint64{prime1, prime2, prime3, prime4, prime5}
 
 // Digest implements hash.Hash64.
 //
-// Note that a zero-valued Digest is not ready to receive writes.
-// Call Reset or create a Digest using New before calling other methods.
+// The zero value of Digest is ready to use with a zero seed.
 type Digest struct {
 	v1    uint64
 	v2    uint64
@@ -73,6 +72,9 @@ func (d *Digest) BlockSize() int { return 32 }
 
 // Write adds more data to d. It always returns len(b), nil.
 func (d *Digest) Write(b []byte) (n int, err error) {
+	if d.v1 == 0 && d.v2 == 0 && d.total == 0 {
+		d.Reset()
+	}
 	n = len(b)
 	d.total += uint64(n)
 
@@ -127,6 +129,9 @@ func (d *Digest) Sum(b []byte) []byte {
 
 // Sum64 returns the current hash.
 func (d *Digest) Sum64() uint64 {
+	if d.v1 == 0 && d.v2 == 0 && d.total == 0 {
+		d.Reset()
+	}
 	var h uint64
 
 	if d.total >= 32 {
@@ -174,6 +179,9 @@ const (
 
 // MarshalBinary implements the encoding.BinaryMarshaler interface.
 func (d *Digest) MarshalBinary() ([]byte, error) {
+	if d.v1 == 0 && d.v2 == 0 && d.total == 0 {
+		d.Reset()
+	}
 	b := make([]byte, 0, marshaledSize)
 	b = append(b, magic...)
 	b = appendUint64(b, d.v1)

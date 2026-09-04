@@ -196,3 +196,48 @@ func testAllocs(t *testing.T, fn func()) {
 		t.Fatalf("got %d allocation(s) (want zero)", allocs)
 	}
 }
+
+func TestZeroValueDigest(t *testing.T) {
+	// A zero-valued Digest should be usable without calling Reset or New.
+	var d Digest
+	if got, want := d.Sum64(), Sum64(nil); got != want {
+		t.Errorf("zero-value d.Sum64(): got 0x%x; want 0x%x", got, want)
+	}
+
+	parts := []string{"The quic", "k br", "o", "wn fox jumps", " ov", "er the lazy ", "dog."}
+	full := strings.Join(parts, "")
+
+	var d2 Digest
+	for _, part := range parts {
+		d2.Write([]byte(part))
+	}
+	if got, want := d2.Sum64(), Sum64([]byte(full)); got != want {
+		t.Errorf("zero-value d2.Sum64(): got 0x%x; want 0x%x", got, want)
+	}
+
+	// Verify embedded struct usage
+	type embeddedHasher struct {
+		h Digest
+	}
+	var eh embeddedHasher
+	eh.h.WriteString(full)
+	if got, want := eh.h.Sum64(), Sum64String(full); got != want {
+		t.Errorf("embedded zero-value Digest: got 0x%x; want 0x%x", got, want)
+	}
+
+	// Verify MarshalBinary on zero-value Digest matches initialized zero-seed Digest
+	var d3 Digest
+	b3, err := d3.MarshalBinary()
+	if err != nil {
+		t.Fatalf("zero-value d3.MarshalBinary(): %v", err)
+	}
+	var dInit Digest
+	dInit.Reset()
+	bInit, err := dInit.MarshalBinary()
+	if err != nil {
+		t.Fatalf("dInit.MarshalBinary(): %v", err)
+	}
+	if !bytes.Equal(b3, bInit) {
+		t.Errorf("zero-value MarshalBinary: got 0x%x; want 0x%x", b3, bInit)
+	}
+}
