@@ -73,3 +73,24 @@ func BenchmarkDigestString(b *testing.B) {
 		})
 	}
 }
+
+func BenchmarkDigestCopy(b *testing.B) {
+	d := New()
+	d.WriteString("abcdefghijklmnopqrstuvwxyz0123456789")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = d.Copy()
+	}
+}
+
+func BenchmarkDigestMarshalBinary(b *testing.B) {
+	d := New()
+	d.WriteString("abcdefghijklmnopqrstuvwxyz0123456789")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		buf, _ := d.MarshalBinary()
+		d2 := new(Digest)
+		_ = d2.UnmarshalBinary(buf)
+	}
+}
+

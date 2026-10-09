@@ -165,6 +165,78 @@ func TestBinaryMarshaling(t *testing.T) {
 	}
 }
 
+func TestCopy(t *testing.T) {
+	// Basic independence check
+	d1 := New()
+	d1.WriteString("abc")
+	d2 := d1.Copy()
+
+	if got1, got2 := d1.Sum64(), d2.Sum64(); got1 != got2 {
+		t.Fatalf("sums differ immediately after Copy: 0x%x != 0x%x", got1, got2)
+	}
+
+	d1.WriteString("def")
+	d2.WriteString("ghi")
+
+	if got, want := d1.Sum64(), Sum64String("abcdef"); got != want {
+		t.Fatalf("original gave sum 0x%x; want 0x%x", got, want)
+	}
+	if got, want := d2.Sum64(), Sum64String("abcghi"); got != want {
+		t.Fatalf("copy gave sum 0x%x; want 0x%x", got, want)
+	}
+
+	// Verify independence across various input lengths and internal buffer states
+	const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!@"
+	for i := 0; i <= len(alphabet); i++ {
+		prefix := alphabet[:i]
+		orig := NewWithSeed(uint64(i * 31))
+		orig.WriteString(prefix)
+
+		cp := orig.Copy()
+		if got, want := cp.Sum64(), orig.Sum64(); got != want {
+			t.Fatalf("len %d: copy sum 0x%x != orig sum 0x%x", i, got, want)
+		}
+		if !bytes.Equal(cp.Sum(nil), orig.Sum(nil)) {
+			t.Fatalf("len %d: Sum byte slices do not match", i)
+		}
+
+		// Mutate original and copy differently
+		orig.WriteString("more-orig-data")
+		cp.WriteString("more-copy-data")
+
+		expectedOrig := NewWithSeed(uint64(i * 31))
+		expectedOrig.WriteString(prefix + "more-orig-data")
+
+		expectedCopy := NewWithSeed(uint64(i * 31))
+		expectedCopy.WriteString(prefix + "more-copy-data")
+
+		if got, want := orig.Sum64(), expectedOrig.Sum64(); got != want {
+			t.Fatalf("len %d: original after write gave 0x%x; want 0x%x", i, got, want)
+		}
+		if got, want := cp.Sum64(), expectedCopy.Sum64(); got != want {
+			t.Fatalf("len %d: copy after write gave 0x%x; want 0x%x", i, got, want)
+		}
+
+		// Reset original and verify copy remains intact
+		orig.Reset()
+		if got, want := cp.Sum64(), expectedCopy.Sum64(); got != want {
+			t.Fatalf("len %d: copy affected by orig.Reset(): got 0x%x; want 0x%x", i, got, want)
+		}
+	}
+
+	// Step-by-step equivalence with parallel writes
+	d0 := New()
+	dRef := New()
+	for i := 0; i < 64; i++ {
+		d0 = d0.Copy()
+		if got, want := d0.Sum64(), dRef.Sum64(); got != want {
+			t.Fatalf("after %d copies/Writes, copied Digest gave sum 0x%x; want 0x%x", i, got, want)
+		}
+		d0.Write([]byte{'a'})
+		dRef.Write([]byte{'a'})
+	}
+}
+
 var sink uint64
 
 func TestAllocs(t *testing.T) {

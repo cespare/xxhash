@@ -167,6 +167,13 @@ func (d *Digest) Sum64() uint64 {
 	return h
 }
 
+// Copy creates a duplicate of the current Digest and returns it.
+// Further operations on the original or copy do not affect each other.
+func (d *Digest) Copy() *Digest {
+	cp := *d
+	return &cp
+}
+
 const (
 	magic         = "xxh\x06"
 	marshaledSize = len(magic) + 8*5 + 32
