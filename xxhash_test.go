@@ -58,6 +58,7 @@ func TestAll(t *testing.T) {
 func testDigest(t *testing.T, input string, seed uint64, chunkSize int, want uint64) {
 	d := NewWithSeed(seed)
 	ds := NewWithSeed(seed) // uses WriteString
+	var dz Digest           // zero-valued Digest
 	for i := 0; i < len(input); i += chunkSize {
 		chunk := input[i:]
 		if len(chunk) > chunkSize {
@@ -71,12 +72,23 @@ func testDigest(t *testing.T, input string, seed uint64, chunkSize int, want uin
 		if err != nil || n != len(chunk) {
 			t.Fatalf("Digest.WriteString: got (%d, %v); want (%d, nil)", n, err, len(chunk))
 		}
+		if seed == 0 {
+			n, err = dz.Write([]byte(chunk))
+			if err != nil || n != len(chunk) {
+				t.Fatalf("zero-value Digest.Write: got (%d, %v); want (%d, nil)", n, err, len(chunk))
+			}
+		}
 	}
 	if got := d.Sum64(); got != want {
 		t.Fatalf("Digest.Sum64: got 0x%x; want 0x%x", got, want)
 	}
 	if got := ds.Sum64(); got != want {
 		t.Fatalf("Digest.Sum64 (WriteString): got 0x%x; want 0x%x", got, want)
+	}
+	if seed == 0 {
+		if got := dz.Sum64(); got != want {
+			t.Fatalf("zero-value Digest.Sum64: got 0x%x; want 0x%x", got, want)
+		}
 	}
 	var b [8]byte
 	binary.BigEndian.PutUint64(b[:], want)
@@ -188,11 +200,118 @@ func TestAllocs(t *testing.T) {
 			sink = d.Sum64()
 		})
 	})
+	t.Run("ZeroValueDigest", func(t *testing.T) {
+		b := []byte("asdf")
+		testAllocs(t, func() {
+			var d Digest
+			d.Write(b)
+			sink = d.Sum64()
+		})
+	})
 }
 
 func testAllocs(t *testing.T, fn func()) {
 	t.Helper()
 	if allocs := int(testing.AllocsPerRun(10, fn)); allocs > 0 {
 		t.Fatalf("got %d allocation(s) (want zero)", allocs)
+	}
+}
+
+func TestZeroValueDigest(t *testing.T) {
+	// A zero-valued Digest should be usable without calling Reset or New.
+	var d Digest
+	if got, want := d.Sum64(), Sum64(nil); got != want {
+		t.Errorf("zero-value d.Sum64(): got 0x%x; want 0x%x", got, want)
+	}
+	if got, want := d.Sum64(), New().Sum64(); got != want {
+		t.Errorf("zero-value d.Sum64(): got 0x%x; want 0x%x", got, want)
+	}
+
+	var dSum Digest
+	if got, want := dSum.Sum(nil), New().Sum(nil); !bytes.Equal(got, want) {
+		t.Errorf("zero-value dSum.Sum(nil): got %v; want %v", got, want)
+	}
+
+	var dSmall Digest
+	dSmall.Write([]byte("short string"))
+	if got, want := dSmall.Sum64(), Sum64([]byte("short string")); got != want {
+		t.Errorf("zero-value dSmall.Sum64(): got 0x%x; want 0x%x", got, want)
+	}
+
+	parts := []string{"The quic", "k br", "o", "wn fox jumps", " ov", "er the lazy ", "dog."}
+	full := strings.Join(parts, "")
+
+	var d2 Digest
+	for _, part := range parts {
+		d2.Write([]byte(part))
+	}
+	if got, want := d2.Sum64(), Sum64([]byte(full)); got != want {
+		t.Errorf("zero-value d2.Sum64(): got 0x%x; want 0x%x", got, want)
+	}
+
+	// Verify embedded struct usage
+	type embeddedHasher struct {
+		h Digest
+	}
+	var eh embeddedHasher
+	eh.h.WriteString(full)
+	if got, want := eh.h.Sum64(), Sum64String(full); got != want {
+		t.Errorf("embedded zero-value Digest: got 0x%x; want 0x%x", got, want)
+	}
+
+	// Verify explicit Reset on a zero-valued Digest
+	var dReset Digest
+	dReset.Reset()
+	dReset.WriteString(full)
+	if got, want := dReset.Sum64(), Sum64String(full); got != want {
+		t.Errorf("explicit Reset on zero-value: got 0x%x; want 0x%x", got, want)
+	}
+
+	// Verify explicit ResetWithSeed on a zero-valued Digest
+	var dSeed Digest
+	dSeed.ResetWithSeed(999)
+	dSeed.WriteString(full)
+	dSeedExpected := NewWithSeed(999)
+	dSeedExpected.WriteString(full)
+	if got, want := dSeed.Sum64(), dSeedExpected.Sum64(); got != want {
+		t.Errorf("explicit ResetWithSeed on zero-value: got 0x%x; want 0x%x", got, want)
+	}
+
+	// Verify MarshalBinary on zero-value Digest matches initialized zero-seed Digest
+	var d3 Digest
+	b3, err := d3.MarshalBinary()
+	if err != nil {
+		t.Fatalf("zero-value d3.MarshalBinary(): %v", err)
+	}
+	var dInit Digest
+	dInit.Reset()
+	bInit, err := dInit.MarshalBinary()
+	if err != nil {
+		t.Fatalf("dInit.MarshalBinary(): %v", err)
+	}
+	if !bytes.Equal(b3, bInit) {
+		t.Errorf("zero-value MarshalBinary: got 0x%x; want 0x%x", b3, bInit)
+	}
+
+	// Verify unmarshaling into a zero-value Digest and continuing hashing
+	var dUnmarshaled Digest
+	if err := dUnmarshaled.UnmarshalBinary(b3); err != nil {
+		t.Fatalf("UnmarshalBinary failed: %v", err)
+	}
+	dUnmarshaled.WriteString(full)
+	if got, want := dUnmarshaled.Sum64(), Sum64String(full); got != want {
+		t.Errorf("unmarshaled zero-value Digest sum: got 0x%x; want 0x%x", got, want)
+	}
+
+	// Verify boundary seed where seed == -(prime1 + prime2) produces v1 == 0
+	// but is not reset by auto-initialization.
+	p1, p2 := prime1, prime2
+	boundarySeed := -(p1 + p2)
+	dBoundary := NewWithSeed(boundarySeed)
+	dBoundary.WriteString(full)
+	dBoundaryExpected := NewWithSeed(boundarySeed)
+	dBoundaryExpected.WriteString(full)
+	if got, want := dBoundary.Sum64(), dBoundaryExpected.Sum64(); got != want {
+		t.Errorf("boundary seed hash: got 0x%x; want 0x%x", got, want)
 	}
 }

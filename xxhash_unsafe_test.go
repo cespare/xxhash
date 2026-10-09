@@ -24,6 +24,13 @@ func TestStringAllocs(t *testing.T) {
 			sink = d.Sum64()
 		})
 	})
+	t.Run("ZeroValueDigest.WriteString", func(t *testing.T) {
+		testAllocs(t, func() {
+			var d Digest
+			d.WriteString(longStr)
+			sink = d.Sum64()
+		})
+	})
 }
 
 // This test is inspired by the Go runtime tests in https://go.dev/cl/57410.
